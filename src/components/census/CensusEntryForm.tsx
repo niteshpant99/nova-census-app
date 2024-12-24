@@ -18,18 +18,18 @@ export function CensusEntryForm() {
   const form = useForm<CensusFormData>({
     resolver: zodResolver(censusFormSchema),
     defaultValues: {
-      date: format(new Date(), 'yyyy-MM-dd'),
-      previousPatients: 0,
+      date: new Date(),  //format(new Date(), 'yyyy-MM-dd'),
+      previous_patients: 0,
       admissions: 0,
-      referralsIn: 0,
-      departmentTransfersIn: 0,
+      referrals_in: 0,
+      department_transfers_in: 0,
       recovered: 0,
       lama: 0,
       absconded: 0,
-      referredOut: 0,
-      notImproved: 0,
+      referred_out: 0,
+      not_improved: 0,
       deaths: 0,
-      otCases: 0,
+      ot_cases: 0,
     },
   });
 
@@ -62,7 +62,7 @@ export function CensusEntryForm() {
             
             <NumberInput 
               form={form} 
-              name="previousPatients" 
+              name="previous_patients" 
               label="Previous Patients" 
             />
             
@@ -71,7 +71,7 @@ export function CensusEntryForm() {
             
             <NumberInput 
               form={form} 
-              name="otCases" 
+              name="ot_cases" 
               label="OT Cases" 
             />
 

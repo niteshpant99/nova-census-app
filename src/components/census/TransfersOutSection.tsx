@@ -16,8 +16,8 @@ export function TransfersOutSection({ form }: TransfersOutSectionProps) {
         <NumberInput form={form} name="recovered" label="Recovered" />
         <NumberInput form={form} name="lama" label="LAMA" />
         <NumberInput form={form} name="absconded" label="Absconded" />
-        <NumberInput form={form} name="referredOut" label="Referred Out" />
-        <NumberInput form={form} name="notImproved" label="Not Improved" />
+        <NumberInput form={form} name="referred_out" label="Referred Out" />
+        <NumberInput form={form} name="not_improved" label="Not Improved" />
         <NumberInput form={form} name="deaths" label="Deaths" />
       </div>
     </div>

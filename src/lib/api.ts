@@ -1,23 +1,43 @@
-// src/lib/api.ts (if not already exists)
-import { createTRPCNext } from '@trpc/next';
-import type { AppRouter } from '@/server/api/root';
+// src/lib/api.ts
+import { createTRPCReact } from '@trpc/react-query';
+import { type inferRouterInputs, type inferRouterOutputs } from '@trpc/server';
+import { type AppRouter } from '@/server/api/root';
+import { httpBatchLink } from '@trpc/client';
 import superjson from 'superjson';
 
-export const api = createTRPCNext<typeof AppRouter>({
-  config() {
-    return {
+const getBaseUrl = () => {
+  if (typeof window !== 'undefined') return '';
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return 'http://localhost:3000';
+};
+
+export const api = createTRPCReact<AppRouter>();
+
+export const getApiConfig = () => ({
+  links: [
+    httpBatchLink({
+      url: `${getBaseUrl()}/api/trpc`,
       transformer: superjson,
-      queryClientConfig: {
-        defaultOptions: {
-          queries: {
-            staleTime: 5 * 1000,
-          },
-        },
+      headers() {
+        return {
+          'x-trpc-source': 'react',
+        };
       },
-    };
+    }),
+  ],
+  queryClientConfig: {
+    defaultOptions: {
+      queries: {
+        staleTime: 5 * 1000,
+        refetchOnWindowFocus: false,
+      },
+    },
   },
-  ssr: false,
 });
 
-export type RouterInputs = typeof AppRouter['_def']['record']['router']['queries'];
-export type RouterOutputs = typeof AppRouter['_def']['record']['router']['queries'];
+/**
+ * Inference helpers for input/output types
+ * @example type HelloInput = RouterInputs['example']['hello']
+ */
+export type RouterInputs = inferRouterInputs<AppRouter>;
+export type RouterOutputs = inferRouterOutputs<AppRouter>;

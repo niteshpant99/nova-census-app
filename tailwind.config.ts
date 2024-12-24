@@ -20,6 +20,11 @@ export default {
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
+  			nova: {
+  				primary: 'hsl(var(--nova-primary))',
+  				secondary: 'hsl(var(--nova-secondary))',
+  				accent: 'hsl(var(--nova-accent))'
+  			},
   			card: {
   				DEFAULT: 'hsl(var(--card))',
   				foreground: 'hsl(var(--card-foreground))'

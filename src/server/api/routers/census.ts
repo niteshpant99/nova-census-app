@@ -5,24 +5,31 @@ import { censusFormSchema } from "@/components/census/types";
 import { TRPCError } from "@trpc/server";
 
 export const censusRouter = createTRPCRouter({
-  // Submit new census entry
   submit: protectedProcedure
     .input(censusFormSchema)
     .mutation(async ({ ctx, input }) => {
       try {
-        const { supabase, user } = ctx;
+        const context = await ctx;
+        const { supabase, user } = context;
+
+        if (!user) {
+          throw new TRPCError({ 
+            code: 'UNAUTHORIZED',
+            message: 'User must be logged in'
+          });
+        }
 
         // Calculate total patients
         const totalPatients = 
-          input.previousPatients +
+          input.previous_patients +
           input.admissions +
-          input.referralsIn +
-          input.departmentTransfersIn -
+          input.referrals_in +
+          input.department_transfers_in -
           (input.recovered +
            input.lama +
            input.absconded +
-           input.referredOut +
-           input.notImproved +
+           input.referred_out +
+           input.not_improved +
            input.deaths);
 
         // Insert census entry
@@ -31,17 +38,17 @@ export const censusRouter = createTRPCRouter({
           .insert({
             department: input.department,
             date: input.date,
-            previous_patients: input.previousPatients,
+            previous_patients: input.previous_patients,
             admissions: input.admissions,
-            referrals_in: input.referralsIn,
-            department_transfers_in: input.departmentTransfersIn,
+            referrals_in: input.referrals_in,
+            department_transfers_in: input.department_transfers_in,
             recovered: input.recovered,
             lama: input.lama,
             absconded: input.absconded,
-            referred_out: input.referredOut,
-            not_improved: input.notImproved,
+            referred_out: input.referred_out,
+            not_improved: input.not_improved,
             deaths: input.deaths,
-            ot_cases: input.otCases,
+            ot_cases: input.ot_cases,
             total_patients: totalPatients,
             created_by: user.id
           })
@@ -73,13 +80,13 @@ export const censusRouter = createTRPCRouter({
       }
     }),
 
-  // Get latest census entry for a department
   getLatest: protectedProcedure
     .input(z.object({
       department: z.string()
     }))
     .query(async ({ ctx, input }) => {
-      const { supabase } = ctx;
+      const context = await ctx;
+      const { supabase } = context;
       
       const { data, error } = await supabase
         .from('census_entries')
@@ -94,25 +101,45 @@ export const censusRouter = createTRPCRouter({
       return data;
     }),
 
-  // Generate WhatsApp message format
+  getByDate: protectedProcedure
+    .input(z.object({
+      date: z.date(),
+      department: z.string()
+    }))
+    .query(async ({ ctx, input }) => {
+      const context = await ctx;
+      const { supabase } = context;
+
+      const { data, error } = await supabase
+        .from('census_entries')
+        .select('*')
+        .eq('date', input.date)
+        .eq('department', input.department)
+        .single();
+
+      if (error) throw error;
+      
+      return data;
+    }),
+
   generateMessage: protectedProcedure
     .input(censusFormSchema)
     .mutation(({ input }) => {
       const totalIn = 
         input.admissions + 
-        input.referralsIn + 
-        input.departmentTransfersIn;
+        input.referrals_in + 
+        input.department_transfers_in;
 
       const totalOut = 
         input.recovered +
         input.lama +
         input.absconded +
-        input.referredOut +
-        input.notImproved +
+        input.referred_out +
+        input.not_improved +
         input.deaths;
 
       const currentPatients = 
-        input.previousPatients + 
+        input.previous_patients + 
         totalIn - 
         totalOut;
 
@@ -120,25 +147,25 @@ export const censusRouter = createTRPCRouter({
         message: `*${input.department} Daily Census Report*
 Date: ${input.date}
 
-Previous Patients: ${input.previousPatients}
+Previous Patients: ${input.previous_patients}
 
 *Transfers In*
-• Admissions: ${input.admissions}
-• Referrals: ${input.referralsIn}
-• Department Transfers: ${input.departmentTransfersIn}
+- Admissions: ${input.admissions}
+- Referrals: ${input.referrals_in}
+- Department Transfers: ${input.department_transfers_in}
 Total In: ${totalIn}
 
 *Transfers Out*
-• Recovered: ${input.recovered}
-• LAMA: ${input.lama}
-• Absconded: ${input.absconded}
-• Referred Out: ${input.referredOut}
-• Not Improved: ${input.notImproved}
-• Deaths: ${input.deaths}
+- Recovered: ${input.recovered}
+- LAMA: ${input.lama}
+- Absconded: ${input.absconded}
+- Referred Out: ${input.referred_out}
+- Not Improved: ${input.not_improved}
+- Deaths: ${input.deaths}
 Total Out: ${totalOut}
 
 Current Patients: ${currentPatients}
-OT Cases: ${input.otCases}`
+OT Cases: ${input.ot_cases}`
       };
     })
 });

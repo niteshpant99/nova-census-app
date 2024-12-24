@@ -9,30 +9,47 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
-import { Database } from '@/types/database'; 
+import { Database } from '@/types/database';
 
-type CreateContextOptions = {
+/**
+ * Context options for creating the inner TRPC context
+ */
+interface CreateInnerContextOptions {
   supabase: SupabaseClient<Database>;
   user: {
     id: string;
     role: string;
   } | null;
-};
+}
 
-const createInnerTRPCContext = (opts: CreateContextOptions) => {
+/**
+ * Context options for creating the TRPC context
+ */
+export interface CreateContextOptions {
+  req?: Request;
+  headers?: Headers;
+}
+
+/**
+ * Inner context creation with validated options
+ */
+const createInnerTRPCContext = (opts: CreateInnerContextOptions) => {
   return {
     supabase: opts.supabase,
     user: opts.user,
   };
 };
 
-export const createTRPCContext = async (opts: CreateNextContextOptions) => {
+/**
+ * Creates context for incoming requests
+ */
+export const createTRPCContext = async (opts: CreateContextOptions) => {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
+  // Get session data using the headers if provided
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -64,7 +81,7 @@ export const createTRPCContext = async (opts: CreateNextContextOptions) => {
  * We also parse ZodErrors so that you get typesafety on the frontend if your procedure fails
  * due to validation errors on the backend.
  */
-const t = initTRPC.context<typeof createTRPCContext>().create({
+const t = initTRPC.context<ReturnType<typeof createTRPCContext>>().create({
   transformer: superjson,
 });
 
@@ -74,13 +91,17 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
  * These are the pieces you use to build your tRPC API. You should import these a lot in the
  * "/src/server/api/routers" directory.
  */
-const isAuthed = t.middleware(({ ctx, next }) => {
-  if (!ctx.user) {
+const isAuthed = t.middleware(async ({ ctx, next }) => {
+  // Need to await the context
+  const context = await ctx;
+  
+  if (!context.user) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
   return next({
     ctx: {
-      user: ctx.user,
+      user: context.user,
+      supabase: context.supabase,
     },
   });
 });

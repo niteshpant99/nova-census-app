@@ -9,6 +9,8 @@
 /coverage
 generate-snapshot.sh
 codebase_snapshot.txt
+codebase-extractor.sh
+codebase_content.txt
 
 # database
 /prisma/db.sqlite

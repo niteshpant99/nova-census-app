@@ -1,6 +1,5 @@
 // src/app/census/[department]/page.tsx
 "use client";
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,92 +11,90 @@ import { NumberInput } from "@/components/census/NumberInput";
 import { ReviewScreen } from "@/components/census/ReviewScreen";
 import { censusEntrySchema, type CensusFormData } from "@/lib/schemas/census";
 import { useToast } from "@/hooks/use-toast";
-import { TRPCClientError } from '@trpc/client';
-import type { CensusResponse, WhatsAppMessageResponse } from "@/server/api/routers/types";
+import { TRPCClientErrorLike } from '@trpc/client';
+import { cn } from '@/lib/utils';
 import { api } from "@/lib/api";
-
+import type { AppRouter } from "@/server/api/root";
 interface PageProps {
-  params: { 
-    department: string;
-  };
+params: {
+department: string;
+};
 }
-
 export default function CensusEntryPage({ params }: PageProps) {
-  const [showCalendar, setShowCalendar] = useState(false);
-  const [isReviewing, setIsReviewing] = useState(false);
-  const { toast } = useToast();
-
-  const form = useForm<CensusFormData>({
-    resolver: zodResolver(censusEntrySchema),
-    defaultValues: {
-      date: new Date(),
-      department: decodeURIComponent(params.department),
-      previous_patients: 0,
-      admissions: 0,
-      referrals_in: 0,
-      department_transfers_in: 0,
-      recovered: 0,
-      lama: 0,
-      absconded: 0,
-      referred_out: 0,
-      not_improved: 0,
-      deaths: 0,
-      ot_cases: 0
-    }
-  });
-
-  const { mutate: submitCensus, isLoading } = api.census.submit.useMutation({
-    onSuccess: (response: CensusResponse) => {
-      toast({
-        title: "Success",
-        description: response.message,
-      });
-      form.reset();
-      setIsReviewing(false);
-    },
-    onError: (error: TRPCClientError<any>) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-      setIsReviewing(false);
-    },
-  });
-
-  const handleSubmit = (data: CensusFormData) => {
-    api.census.generateMessage.mutate(data, {
-      onSuccess: (response: WhatsAppMessageResponse) => {
-        navigator.clipboard.writeText(response.message)
-          .then(() => {
-            toast({
-              title: "WhatsApp Message Copied",
-              description: "The formatted message has been copied to your clipboard",
-            });
-          });
-        submitCensus(data);
-      },
-    });
-  };
-
-  const onSubmit = (data: CensusFormData) => {
-    if (!isReviewing) {
-      setIsReviewing(true);
-      return;
-    }
-    handleSubmit(data);
-  };
-
-  if (isReviewing) {
-    return (
-      <ReviewScreen
-        data={form.getValues()}
-        onSubmit={() => handleSubmit(form.getValues())}
-        onEdit={() => setIsReviewing(false)}
-        isLoading={isLoading}
-      />
-    );
-  }
+const [showCalendar, setShowCalendar] = useState(false);
+const [isReviewing, setIsReviewing] = useState(false);
+const { toast } = useToast();
+const form = useForm<CensusFormData>({
+resolver: zodResolver(censusEntrySchema),
+defaultValues: {
+date: new Date(),
+department: decodeURIComponent(params.department),
+previous_patients: 0,
+admissions: 0,
+referrals_in: 0,
+department_transfers_in: 0,
+recovered: 0,
+lama: 0,
+absconded: 0,
+referred_out: 0,
+not_improved: 0,
+deaths: 0,
+ot_cases: 0
+}
+});
+const submitMutation = api.census.submit.useMutation({
+onSuccess: (response) => {
+toast({
+title: "Success",
+description: response.message,
+});
+form.reset();
+setIsReviewing(false);
+},
+onError: (error: TRPCClientErrorLike<AppRouter>) => {
+toast({
+title: "Error",
+description: error.message,
+variant: "destructive",
+});
+setIsReviewing(false);
+},
+});
+const generateMessageMutation = api.census.generateMessage.useMutation();
+const handleSubmit = async (data: CensusFormData) => {
+try {
+const messageResponse = await generateMessageMutation.mutateAsync(data);
+await navigator.clipboard.writeText(messageResponse.message);
+toast({
+title: "WhatsApp Message Copied",
+description: "The formatted message has been copied to your clipboard",
+});
+submitMutation.mutate(data);
+} catch (error) {
+toast({
+title: "Error",
+description: "Failed to generate message",
+variant: "destructive",
+});
+}
+};
+const onSubmit = (data: CensusFormData) => {
+if (!isReviewing) {
+setIsReviewing(true);
+return;
+}
+handleSubmit(data);
+};
+if (isReviewing) {
+return (
+<ReviewScreen
+data={form.getValues()}
+onSubmit={() => handleSubmit(form.getValues())}
+onEdit={() => setIsReviewing(false)}
+isLoading={submitMutation.isPending || generateMessageMutation.isPending}
+/>
+);
+}
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -117,7 +114,7 @@ export default function CensusEntryPage({ params }: PageProps) {
             <Button
               type="button"
               variant="outline"
-              className="w-full bg-white shadow-sm hover:bg-gray-50"
+              className="w-full bg-background shadow-sm hover:bg-gray-50"
               onClick={() => setShowCalendar(!showCalendar)}
             >
               {form.getValues("date").toLocaleDateString()}
@@ -151,7 +148,7 @@ export default function CensusEntryPage({ params }: PageProps) {
               form={form}
               name="previous_patients"
               label="Old patients"
-              className="bg-white"
+              className="bg-background"
             />
 
             {/* Transfer In Section */}
@@ -161,19 +158,19 @@ export default function CensusEntryPage({ params }: PageProps) {
                 form={form}
                 name="referrals_in"
                 label="Referred in"
-                className="bg-white"
+                className="bg-background"
               />
               <NumberInput
                 form={form}
                 name="department_transfers_in"
                 label="Department Transfers"
-                className="bg-white"
+                className="bg-background"
               />
               <NumberInput
                 form={form}
                 name="admissions"
                 label="Admissions"
-                className="bg-white"
+                className="bg-background"
               />
             </div>
 
@@ -184,37 +181,37 @@ export default function CensusEntryPage({ params }: PageProps) {
                 form={form}
                 name="recovered"
                 label="Recovered"
-                className="bg-white"
+                className="bg-background"
               />
               <NumberInput
                 form={form}
                 name="lama"
                 label="LAMA"
-                className="bg-white"
+                className="bg-background"
               />
               <NumberInput
                 form={form}
                 name="absconded"
                 label="Absconded"
-                className="bg-white"
+                className="bg-background"
               />
               <NumberInput
                 form={form}
                 name="referred_out"
                 label="Referred out"
-                className="bg-white"
+                className="bg-background"
               />
               <NumberInput
                 form={form}
                 name="not_improved"
                 label="Not improved"
-                className="bg-white"
+                className="bg-background"
               />
               <NumberInput
                 form={form}
                 name="deaths"
                 label="Death"
-                className="bg-white"
+                className="bg-background"
               />
             </div>
 
@@ -223,16 +220,19 @@ export default function CensusEntryPage({ params }: PageProps) {
               form={form}
               name="ot_cases"
               label="OT Cases"
-              className="bg-white"
+              className="bg-background"
             />
 
             {/* Submit Button */}
             <Button 
               type="submit" 
               className="w-full bg-gray-900 hover:bg-gray-800"
-              disabled={isLoading}
+              disabled={submitMutation.isPending || generateMessageMutation.isPending}
             >
-              {isLoading ? "Submitting..." : "Continue"}
+              {(submitMutation.isPending || generateMessageMutation.isPending) 
+                ? "Submitting..." 
+                : "Continue"
+              }
             </Button>
           </form>
         </Form>
