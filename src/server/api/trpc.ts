@@ -10,7 +10,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
-import { Database } from '@/types/database'; // You'll need to generate this
+import { Database } from '@/types/database'; 
 
 type CreateContextOptions = {
   supabase: SupabaseClient<Database>;
