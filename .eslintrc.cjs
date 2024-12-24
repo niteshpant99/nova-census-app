@@ -6,7 +6,7 @@ module.exports = {
     tsconfigRootDir: __dirname,
   },
   plugins: [
-    "typescript-eslint"  // Changed from "@typescript-eslint"
+    "@typescript-eslint"  // Fixed: Changed back to "@typescript-eslint"
   ],
   extends: [
     "next/core-web-vitals",
