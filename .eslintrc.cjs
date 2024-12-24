@@ -2,10 +2,11 @@
 module.exports = {
   parser: "@typescript-eslint/parser",
   parserOptions: {
-    project: true
+    project: true,
+    tsconfigRootDir: __dirname,
   },
   plugins: [
-    "@typescript-eslint"
+    "typescript-eslint"  // Changed from "@typescript-eslint"
   ],
   extends: [
     "next/core-web-vitals",
