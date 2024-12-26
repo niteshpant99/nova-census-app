@@ -16,7 +16,7 @@ export function ReviewScreen({ data, onEdit, onSubmit, isLoading }: ReviewScreen
   const { total_transfers_in, total_transfers_out, current_patients } = calculateTotals(data);
 
   // Generate WhatsApp message preview
-  const whatsappMessage = `${data.department} Census Update ${data.date.toLocaleDateString()}
+  const whatsappMessage = `${data.department} Census Update ${data.date}
 Previous Patients: ${data.previous_patients}
 Transfers In: ${total_transfers_in}
 - Referrals: ${data.referrals_in}
@@ -40,7 +40,7 @@ OT Cases: ${data.ot_cases}`;
         <div className="space-y-4">
           <div>
             <span className="text-sm text-muted-foreground">Date</span>
-            <p className="font-medium">{data.date.toLocaleDateString()}</p>
+            <p className="font-medium">{data.date}</p>
           </div>
 
           <div>
