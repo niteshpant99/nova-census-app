@@ -44,7 +44,7 @@ const createInnerTRPCContext = (opts: CreateInnerContextOptions) => {
  * Creates context for incoming requests
  */
 export const createTRPCContext = async (opts: CreateContextOptions) => {
-  const supabase = createClient(
+  const supabase = createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
@@ -91,17 +91,14 @@ const t = initTRPC.context<ReturnType<typeof createTRPCContext>>().create({
  * These are the pieces you use to build your tRPC API. You should import these a lot in the
  * "/src/server/api/routers" directory.
  */
-const isAuthed = t.middleware(async ({ ctx, next }) => {
-  // Need to await the context
-  const context = await ctx;
-  
-  if (!context.user) {
+const isAuthed = t.middleware(({ ctx, next }) => {
+  if (!ctx.user) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
   return next({
     ctx: {
-      user: context.user,
-      supabase: context.supabase,
+      user: ctx.user,
+      supabase: ctx.supabase,
     },
   });
 });
