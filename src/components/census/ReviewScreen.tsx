@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { CensusFormData, calculateTotals } from '@/lib/schemas/census';
+import { type CensusFormData, calculateTotals } from '@/lib/schemas/census';
 
 interface ReviewScreenProps {
   data: CensusFormData;

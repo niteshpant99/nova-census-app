@@ -2,10 +2,12 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { format } from 'date-fns';
+import { format } from "date-fns"; // Add this import to help with date formatting
+
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
+
 import { censusFormSchema, type CensusFormData } from './types';
 import { DepartmentSelector } from './DepartmentSelector';
 import { TransfersInSection } from './TransfersInSection';
@@ -18,18 +20,18 @@ export function CensusEntryForm() {
   const form = useForm<CensusFormData>({
     resolver: zodResolver(censusFormSchema),
     defaultValues: {
-      date: new Date(),  //format(new Date(), 'yyyy-MM-dd'),
-      previous_patients: 0,
-      admissions: 0,
-      referrals_in: 0,
-      department_transfers_in: 0,
-      recovered: 0,
-      lama: 0,
-      absconded: 0,
-      referred_out: 0,
-      not_improved: 0,
-      deaths: 0,
-      ot_cases: 0,
+      date: format(new Date(), 'yyyy-MM-dd'),
+      previous_patients: undefined,
+      admissions: undefined,
+      referrals_in: undefined,
+      department_transfers_in: undefined,
+      recovered: undefined,
+      lama: undefined,
+      absconded: undefined,
+      referred_out: undefined,
+      not_improved: undefined,
+      deaths: undefined,
+      ot_cases: undefined,
     },
   });
 

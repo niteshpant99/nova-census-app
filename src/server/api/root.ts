@@ -1,6 +1,6 @@
 // src/server/api/root.ts
 
-import { publicProcedure, createTRPCRouter } from './trpc';
+import {createTRPCRouter } from './trpc';
 
 import { censusRouter } from "./routers/census";
 

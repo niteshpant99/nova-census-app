@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 export const censusFormSchema = z.object({
   department: z.string(),
-  date: z.date(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be in YYYY-MM-DD format"),
   previous_patients: z.number().min(0),
   // Transfers in
   admissions: z.number().min(0),

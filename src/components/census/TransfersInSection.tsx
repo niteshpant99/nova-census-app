@@ -1,7 +1,7 @@
 // src/components/census/TransfersInSection.tsx
 import React from 'react';
-import { UseFormReturn } from 'react-hook-form';
-import { CensusFormData } from './types';
+import { type UseFormReturn } from 'react-hook-form';
+import { type CensusFormData } from './types';
 import { NumberInput } from './NumberInput';
 
 interface TransfersInSectionProps {

@@ -5,7 +5,6 @@ import { type NextRequest } from "next/server";
 import { env } from "~/env";
 import { AppRouter } from "~/server/api/root";
 import { createTRPCContext } from "~/server/api/trpc";
-import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
 
 
 /**

@@ -1,9 +1,11 @@
 // src/components/census/DatePicker.tsx
 import { Calendar } from "@/components/ui/calendar";
 import { FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { UseFormReturn } from "react-hook-form";
-import { CensusFormData } from "@/lib/schemas/census";
+import { type UseFormReturn } from "react-hook-form";
+import { type CensusEntry, type CensusFormData } from "@/lib/schemas/census";
 import { api } from "@/lib/api";
+import { format } from "date-fns";
+
 
 interface DatePickerProps {
   form: UseFormReturn<CensusFormData>;
@@ -12,10 +14,10 @@ interface DatePickerProps {
 
 export function DatePicker({ form, department }: DatePickerProps) {
   const { data: existingEntry } = api.census.getByDate.useQuery({
-    date: form.getValues("date"),
-    department
-  });
-
+       date: form.getValues("date"),
+      department
+     }) as { data: CensusEntry | null };
+    
   return (
     <FormField
       control={form.control}
@@ -25,14 +27,14 @@ export function DatePicker({ form, department }: DatePickerProps) {
           <FormLabel>Date</FormLabel>
           <Calendar
             mode="single"
-            selected={field.value}
+            selected={field.value ? new Date(field.value) : undefined}
             onSelect={(date) => {
-              if (date && !existingEntry) {
-                field.onChange(date);
+              if (date) {
+                // Convert Date to YYYY-MM-DD string
+                field.onChange(format(date, 'yyyy-MM-dd'));
               }
             }}
             disabled={(date) => {
-              // Disable future dates and dates with existing entries
               return date > new Date() || Boolean(existingEntry);
             }}
           />
@@ -41,3 +43,35 @@ export function DatePicker({ form, department }: DatePickerProps) {
     />
   );
 }
+
+// export function DatePicker({ form, department }: DatePickerProps) {
+//   const { data: existingEntry } = api.census.getByDate.useQuery({
+//     date: form.getValues("date"),
+//     department
+//   }) as { data: CensusEntry | null };
+
+//   return (
+//     <FormField
+//       control={form.control}
+//       name="date"
+//       render={({ field }) => (
+//         <FormItem>
+//           <FormLabel>Date</FormLabel>
+//           <Calendar
+//             mode="single"
+//             selected={field.value}
+//             onSelect={(date) => {
+//               if (date && !existingEntry) {
+//                 field.onChange(date);
+//               }
+//             }}
+//             disabled={(date) => {
+//               // Disable future dates and dates with existing entries
+//               return date > new Date() || Boolean(existingEntry);
+//             }}
+//           />
+//         </FormItem>
+//       )}
+//     />
+//   );
+// }

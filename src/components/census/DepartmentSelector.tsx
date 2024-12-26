@@ -1,7 +1,7 @@
 // src/components/census/DepartmentSelector.tsx
 import React from 'react';
-import { UseFormReturn } from 'react-hook-form';
-import { CensusFormData } from './types';
+import { type UseFormReturn } from 'react-hook-form';
+import { type CensusFormData } from './types';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 

@@ -2,16 +2,15 @@
 import React from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { UseFormReturn } from 'react-hook-form';
-import { CensusFormData } from '@/lib/schemas/census';
+import { type UseFormReturn } from 'react-hook-form';
+import { type CensusFormData } from '@/lib/schemas/census';
 import { cn } from "@/lib/utils";
 
-// Update the interface to include optional className
 interface NumberInputProps {
-  form: UseFormReturn<CensusFormData>;
-  name: keyof CensusFormData;
+  form: UseFormReturn<any>;  // Make form type more flexible
+  name: string;
   label: string;
-  className?: string;  // Add this line
+  className?: string;
 }
 
 // Make sure to destructure className from props
@@ -25,7 +24,7 @@ export function NumberInput({ form, name, label, className }: NumberInputProps) 
           <FormLabel>{label}</FormLabel>
           <FormControl>
             <Input
-              type="number"
+              type="text"           // changed to text
               inputMode="numeric"
               pattern="[0-9]*"
               min="0"
@@ -36,7 +35,10 @@ export function NumberInput({ form, name, label, className }: NumberInputProps) 
                 className
               )}
               // Convert Date to string for the value prop
-              value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : field.value}
+              // NEED TO CHANGE THIS
+              // value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : field.value} 
+              // Ensure value is always a string
+              value={field.value == null ? "" : String(field.value)}
               onChange={e => {
                 const value = e.target.value === '' ? 0 : Number(e.target.value);
                 field.onChange(value);
