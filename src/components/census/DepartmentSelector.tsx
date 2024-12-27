@@ -9,7 +9,7 @@ interface DepartmentSelectorProps {
   form: UseFormReturn<CensusFormData>;
 }
 
-const departments = ['NICU', 'ICU', 'General Ward', 'Pediatric Ward'];
+const departments = ['NICU', 'ICU', 'General Ward', 'Pediatric Ward', 'Post Op'];
 
 export function DepartmentSelector({ form }: DepartmentSelectorProps) {
   return (
