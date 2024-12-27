@@ -1,9 +1,9 @@
 // src/lib/schemas/census.ts
 import { z } from "zod";
-import type { Database } from "@/types/database";
+// import type { Database } from "@/types/database";
 
 // Type alias for the database census entry
-type DatabaseCensusEntry = Database["public"]["Tables"]["census_entries"]["Row"];
+// type DatabaseCensusEntry = Database["public"]["Tables"]["census_entries"]["Row"];
 
 export const censusEntrySchema = z.object({
   // Basic info

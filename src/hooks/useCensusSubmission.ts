@@ -1,7 +1,7 @@
 // src/hooks/useCensusSubmission.ts
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
-import { TRPCClientErrorLike } from "@trpc/client";
+import type { TRPCClientErrorLike } from "@trpc/client";
 import type { AppRouter } from "@/server/api/root";
 
 interface UseCensusSubmissionProps {

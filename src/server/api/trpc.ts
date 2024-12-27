@@ -9,7 +9,7 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { Session } from '@supabase/supabase-js'; 
+// import { Session } from '@supabase/supabase-js'; 
 import { type Database } from '@/types/database';
 
 /**
@@ -70,7 +70,7 @@ export const createTRPCContext = async (_opts: CreateContextOptions) => {
   );
 
   // Fix the unsafe assignment by explicitly typing the session response
-  const sessionResult = await supabase.auth.getSession();
+  // const sessionResult = await supabase.auth.getSession();
 
   const { data: { session } } = await supabase.auth.getSession();
 

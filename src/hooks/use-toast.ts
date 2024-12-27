@@ -29,7 +29,7 @@ const ACTION_TYPES = {
 let count = 0
 
 // Then create a type from the values of the object
-type ActionType = typeof ACTION_TYPES[keyof typeof ACTION_TYPES];
+// type ActionType = typeof ACTION_TYPES[keyof typeof ACTION_TYPES];
 
 function genId() {
   count = (count + 1) % Number.MAX_SAFE_INTEGER

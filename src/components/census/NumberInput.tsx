@@ -7,8 +7,8 @@ import { type CensusFormData } from '@/lib/schemas/census';
 import { cn } from "@/lib/utils";
 
 interface NumberInputProps {
-  form: UseFormReturn<any>;  // Make form type more flexible
-  name: string;
+  form: UseFormReturn<CensusFormData>; 
+  name: keyof CensusFormData; // Ensure name is one of the keys of CensusFormData
   label: string;
   className?: string;
 }
@@ -34,9 +34,6 @@ export function NumberInput({ form, name, label, className }: NumberInputProps) 
                 "bg-background",
                 className
               )}
-              // Convert Date to string for the value prop
-              // NEED TO CHANGE THIS
-              // value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : field.value} 
               // Ensure value is always a string
               value={field.value == null ? "" : String(field.value)}
               onChange={e => {

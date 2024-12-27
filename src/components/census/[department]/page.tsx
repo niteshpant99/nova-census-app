@@ -37,16 +37,16 @@ export default function CensusEntryPage({ params }: PageProps) {
             date: format(new Date(), 'yyyy-MM-dd'), // Format date as string
             department: decodeURIComponent(params.department),
             previous_patients: 0,
-            admissions: 0,
-            referrals_in: 0,
-            department_transfers_in: 0,
-            recovered: 0,
-            lama: 0,
-            absconded: 0,
-            referred_out: 0,
-            not_improved: 0,
-            deaths: 0,
-            ot_cases: 0
+            admissions: undefined,
+            referrals_in: undefined,
+            department_transfers_in: undefined,
+            recovered: undefined,
+            lama: undefined,
+            absconded: undefined,
+            referred_out: undefined,
+            not_improved: undefined,
+            deaths: undefined,
+            ot_cases: undefined
       }
 });
 
@@ -125,6 +125,7 @@ const handleSubmit = async (data: CensusFormData) => {
 
   } catch (error) {
     // Handle any error that occurs in either API call
+    console.error('Failed to generate message:', error);
     toast({
       title: "Error",
       description: "Failed to generate message",

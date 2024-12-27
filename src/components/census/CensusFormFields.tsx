@@ -2,8 +2,8 @@
 import React from "react";
 import { NumberInput } from "@/components/census/NumberInput";
 
-import { useForm } from "react-hook-form";
-import { CensusFormData } from "@/lib/schemas/census";
+import type { useForm } from "react-hook-form";
+import type { CensusFormData } from "@/lib/schemas/census";
 
 interface CensusFormFieldsProps {
   form: ReturnType<typeof useForm<CensusFormData>>;
