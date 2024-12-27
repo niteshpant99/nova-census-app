@@ -1,11 +1,15 @@
-// src/app/page.tsx
-import { Button } from "@/components/ui/button";
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function Home() {
-  return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold">Nova Census App</h1>
-      <Button>hello world</Button>
-    </div>
-  );
+  const router = useRouter();
+
+  useEffect(() => {
+    // Redirect to dashboard or login
+    router.push('/dashboard');
+  }, [router]);
+
+  return null; // No need to render anything as we're redirecting
 }
