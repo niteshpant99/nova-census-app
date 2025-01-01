@@ -57,7 +57,7 @@ export type Database = {
           record_id?: string;
           table_name?: string;
         };
-        Relationships: [];
+        Relationships: never[];
       };
       census_entries: {
         Row: {
@@ -75,6 +75,7 @@ export type Database = {
           lama: number | null;
           not_improved: number | null;
           ot_cases: number | null;
+          parent_department: string | null;
           previous_patients: number;
           recovered: number | null;
           referrals_in: number | null;
@@ -98,6 +99,7 @@ export type Database = {
           lama?: number | null;
           not_improved?: number | null;
           ot_cases?: number | null;
+          parent_department?: string | null;
           previous_patients: number;
           recovered?: number | null;
           referrals_in?: number | null;
@@ -121,6 +123,7 @@ export type Database = {
           lama?: number | null;
           not_improved?: number | null;
           ot_cases?: number | null;
+          parent_department?: string | null;
           previous_patients?: number;
           recovered?: number | null;
           referrals_in?: number | null;
@@ -129,31 +132,49 @@ export type Database = {
           total_transfers_out?: number | null;
           updated_at?: string | null;
         };
-        Relationships: [];
+        Relationships: never[];
       };
       user_profiles: {
         Row: {
+          avatar_url: string | null;
+          contact_number: string | null;
           created_at: string | null;
           departments: string[];
+          display_name: string;
+          email: string;
+          full_name: string | null;
           id: string;
+          initials: string | null;
           last_active: string | null;
           role: string;
         };
         Insert: {
+          avatar_url?: string | null;
+          contact_number?: string | null;
           created_at?: string | null;
           departments: string[];
+          display_name: string;
+          email: string;
+          full_name?: string | null;
           id: string;
+          initials?: string | null;
           last_active?: string | null;
           role: string;
         };
         Update: {
+          avatar_url?: string | null;
+          contact_number?: string | null;
           created_at?: string | null;
           departments?: string[];
+          display_name?: string;
+          email?: string;
+          full_name?: string | null;
           id?: string;
+          initials?: string | null;
           last_active?: string | null;
           role?: string;
         };
-        Relationships: [];
+        Relationships: never[];
       };
     };
     Views: Record<never, never>;
@@ -171,21 +192,21 @@ export type Database = {
   };
 };
 
-type PublicSchema = Database[Extract<keyof Database, "public">];
+// This type is used by the Tables helper below, so we need to keep it
+export type PublicSchema = Database[Extract<keyof Database, "public">];
 
+// Keeping your existing table type helper
 export type Tables<T extends keyof Database["public"]["Tables"]> = Database["public"]["Tables"][T];
 
-// Helper types for each table
+// Keeping your existing type exports exactly as they are
 export type UserProfile = Tables<"user_profiles">["Row"];
 export type CensusEntry = Tables<"census_entries">["Row"];
 export type AuditLog = Tables<"audit_logs">["Row"];
 
-// Helper types for inserts
 export type UserProfileInsert = Tables<"user_profiles">["Insert"];
 export type CensusEntryInsert = Tables<"census_entries">["Insert"];
 export type AuditLogInsert = Tables<"audit_logs">["Insert"];
 
-// Helper types for updates
 export type UserProfileUpdate = Tables<"user_profiles">["Update"];
 export type CensusEntryUpdate = Tables<"census_entries">["Update"];
 export type AuditLogUpdate = Tables<"audit_logs">["Update"];

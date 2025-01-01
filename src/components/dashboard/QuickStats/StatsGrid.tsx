@@ -1,6 +1,6 @@
 // src/components/dashboard/QuickStats/StatsGrid.tsx
 
-import { type DashboardStats } from '../types';
+import { type DashboardStats } from '@/components/dashboard/types';
 import { StatsCard } from './StatsCard';
 import { Activity, Users, ArrowRightLeft, Percent } from 'lucide-react';
 

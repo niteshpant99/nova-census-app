@@ -1,92 +1,102 @@
-// src/lib/schemas/census.ts
-import { z } from "zod";
-// import type { Database } from "@/types/database";
+// src/components/census/CensusEntryForm.tsx
+'use client';
 
-// Type alias for the database census entry
-// type DatabaseCensusEntry = Database["public"]["Tables"]["census_entries"]["Row"];
+import { Form } from '@/components/ui/form';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { TransfersInSection } from './TransfersInSection';
+import { TransfersOutSection } from './TransfersOutSection';
+import { NumberInput } from './NumberInput';
+import { ReviewScreen } from './ReviewScreen';
+import { DatePicker } from './DatePicker';
+import { useCensusForm } from '@/hooks/useCensusForm';
 
-export const censusEntrySchema = z.object({
-  // Basic info
-  department: z.string(),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be in YYYY-MM-DD format"), // Changed from z.date()
-  
-  // Patient counts
-  previous_patients: z.number().min(0),
-  
-  // Transfers in
-  admissions: z.number().min(0).optional(),
-  referrals_in: z.number().min(0).optional(),
-  department_transfers_in: z.number().min(0).optional(),
-  // Transfers out
-  recovered: z.number().min(0).optional(),
-  lama: z.number().min(0).optional(),
-  absconded: z.number().min(0).optional(),
-  referred_out: z.number().min(0).optional(),
-  not_improved: z.number().min(0).optional(),
-  deaths: z.number().min(0).optional(),
-  
-  // Additional data
-  ot_cases: z.number().min(0).optional(),
-
-});
-
-// Type for form data
-export type CensusFormData = z.infer<typeof censusEntrySchema>;
-
-// Type for database entry (matches Supabase schema)
-export interface CensusEntry {
-  id: string;
-  department: string;
-  date: string;
-  previous_patients: number;
-  
-  // Transfers in (nullable)
-  admissions: number | null;
-  referrals_in: number | null;
-  department_transfers_in: number | null;
-  total_transfers_in: number | null;
-  
-  // Transfers out (nullable)
-  recovered: number | null;
-  lama: number | null;
-  absconded: number | null;
-  referred_out: number | null;
-  not_improved: number | null;
-  deaths: number | null;
-  total_transfers_out: number | null;
-  
-  // Additional data
-  ot_cases: number | null;
-  current_patients: number | null;
-  
-  // Metadata
-  created_by: string;
-  created_at: string | null;
-  updated_at: string | null;
-  is_locked: boolean | null;
+interface CensusEntryFormProps {
+  initialDepartment: string;
 }
 
-// Helper function for calculating totals
-export const calculateTotals = (data: Partial<CensusFormData>) => {
-  const total_transfers_in = 
-    (data.admissions ?? 0) + 
-    (data.referrals_in ?? 0) + 
-    (data.department_transfers_in ?? 0);
+export function CensusEntryForm({ initialDepartment }: CensusEntryFormProps) {
+  const {
+    form,
+    isReviewing,
+    isSubmitting,
+    showCalendar,
+    setShowCalendar,
+    setIsReviewing,
+    handleSubmit,
+    onSubmit,
+  } = useCensusForm({ initialDepartment });
 
-  const total_transfers_out = 
-    (data.recovered ?? 0) +
-    (data.lama ?? 0) +
-    (data.absconded ?? 0) +
-    (data.referred_out ?? 0) +
-    (data.not_improved ?? 0) +
-    (data.deaths ?? 0);
+  if (isReviewing) {
+    return (
+      <ReviewScreen
+        data={form.getValues()}
+        onSubmit={() => handleSubmit(form.getValues())}
+        onEdit={() => setIsReviewing(false)}
+        isLoading={isSubmitting}
+      />
+    );
+  }
 
-  const current_patients = 
-    (data.previous_patients ?? 0) + total_transfers_in - total_transfers_out;
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Date Selection */}
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full bg-background shadow-sm hover:bg-gray-50"
+          onClick={() => setShowCalendar(!showCalendar)}
+        >
+          {new Date(form.getValues("date")).toLocaleDateString()}
+        </Button>
 
-  return {
-    total_transfers_in,
-    total_transfers_out,
-    current_patients
-  };
-};
+        {showCalendar && (
+          <Card className="p-4">
+            <DatePicker 
+              form={form} 
+              department={initialDepartment}
+              onSelect={() => setShowCalendar(false)}
+            />
+          </Card>
+        )}
+
+        {/* Department Header */}
+        <div className="sticky top-0 bg-white/90 backdrop-blur-sm border-b pb-4">
+          <h2 className="text-lg font-medium">
+            {decodeURIComponent(initialDepartment)}
+          </h2>
+        </div>
+
+        {/* Previous Patients */}
+        <NumberInput
+          form={form}
+          name="previous_patients"
+          label="Old patients"
+          className="bg-background"
+        />
+
+        {/* Transfer Sections */}
+        <TransfersInSection form={form} />
+        <TransfersOutSection form={form} />
+
+        {/* OT Cases */}
+        <NumberInput
+          form={form}
+          name="ot_cases"
+          label="OT Cases"
+          className="bg-background"
+        />
+
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          className="w-full bg-gray-900 hover:bg-gray-800"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? "Submitting..." : "Continue"}
+        </Button>
+      </form>
+    </Form>
+  );
+}

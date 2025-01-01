@@ -10,9 +10,14 @@ import { format } from "date-fns";
 interface DatePickerProps {
   form: UseFormReturn<CensusFormData>;
   department: string;
+  onSelect?: () => void; // Add optional onSelect callback
 }
 
-export function DatePicker({ form, department }: DatePickerProps) {
+export function DatePicker({ 
+  form, 
+  department,
+  onSelect = () => void 0     // provide default value for onSelect
+}: DatePickerProps) {
   const { data: existingEntry } = api.census.getByDate.useQuery({
        date: form.getValues("date"),
       department
@@ -32,6 +37,7 @@ export function DatePicker({ form, department }: DatePickerProps) {
               if (date) {
                 // Convert Date to YYYY-MM-DD string
                 field.onChange(format(date, 'yyyy-MM-dd'));
+                onSelect?.(); // Call onSelect if provided
               }
             }}
             disabled={(date) => {

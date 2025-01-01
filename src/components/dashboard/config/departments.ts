@@ -1,4 +1,8 @@
-import type { Department } from '../types';
+// src/compoents/dashboard/config/department.ts
+
+import type { Department } from '@/components/dashboard/types';
+
+// TODO: In future versions, consolidate department types and handling
 
 export const DEPARTMENTS: Department[] = [
   {

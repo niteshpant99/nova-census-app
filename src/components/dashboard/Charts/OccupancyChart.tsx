@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import type { DepartmentOccupancy } from '../types';
+import type { DepartmentOccupancy } from '@/components/dashboard/types';
 
 interface OccupancyChartProps {
   data: DepartmentOccupancy[];

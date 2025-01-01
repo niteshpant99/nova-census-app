@@ -15,7 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { type Department } from '../types';
+import { type Department } from '@/components/dashboard/types';
 
 interface DepartmentFilterProps {
   departments: Department[];

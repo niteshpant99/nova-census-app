@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import type { DischargeData } from '../types';
+import type { DischargeData } from '@/components/dashboard/types';
 
 interface DischargeChartProps {
   data: DischargeData[];
