@@ -40,7 +40,7 @@ export async function middleware(request: NextRequest) {
 
   // Protected routes
   if (!session && !requestUrl.pathname.startsWith('/auth')) {
-    return NextResponse.redirect(new URL('/auth/login', request.url))
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
   // Redirect logged in users away from auth pages
@@ -53,7 +53,12 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|api/auth/callback).*)',
     // '/((?!_next/static|_next/image|favicon.ico|api/auth/callback).*)',
+    // '/((?!_next/static|_next/image|favicon.ico|api/auth/callback).*)',
+    '/',
+    '/login',
+    '/dashboard/:path*',
+    '/census/:path*',
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 }
