@@ -4,6 +4,12 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
   const requestUrl = new URL(request.url)
+  
+  // First, check if this is the login page
+  if (requestUrl.pathname === '/login') {
+    return NextResponse.next()
+  }
+
   const response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -39,12 +45,12 @@ export async function middleware(request: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession()
 
   // Protected routes
-  if (!session && !requestUrl.pathname.startsWith('/auth')) {
+  if (!session) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Redirect logged in users away from auth pages
-  if (session && requestUrl.pathname.startsWith('/auth')) {
+  // If user is logged in and tries to access login page, redirect to dashboard
+  if (session && requestUrl.pathname === '/login') {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
@@ -53,12 +59,10 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // '/((?!_next/static|_next/image|favicon.ico|api/auth/callback).*)',
-    // '/((?!_next/static|_next/image|favicon.ico|api/auth/callback).*)',
     '/',
-    '/login',
     '/dashboard/:path*',
     '/census/:path*',
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    // Exclude login page and static assets from middleware
+    '/((?!login|api|_next/static|_next/image|favicon.ico).*)',
   ],
 }

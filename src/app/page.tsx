@@ -2,14 +2,28 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 export default function Home() {
   const router = useRouter();
+  const supabase = createClient();
 
   useEffect(() => {
-    // Redirect to dashboard or login
-    router.push('/login');
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.push('/dashboard');
+      } else {
+        router.push('/login');
+      }
+    }
+
+    void checkSession();
   }, [router]);
 
-  return null; // No need to render anything as we're redirecting
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="text-center">Loading...</div>
+    </div>
+  );
 }
