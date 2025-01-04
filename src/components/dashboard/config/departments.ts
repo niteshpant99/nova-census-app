@@ -3,6 +3,16 @@
 import type { Department } from '@/components/dashboard/types';
 
 // TODO: In future versions, consolidate department types and handling
+{/*
+  Post op:10
+Cabin:3
+General ward:18
+ICU:5
+Pediatric ward:9
+NICU:8
+Maternal ward:7
+There are altogether 60 beds including cabin.
+*/}
 
 export const DEPARTMENTS: Department[] = [
   {
@@ -26,17 +36,22 @@ export const DEPARTMENTS: Department[] = [
   {
     id: 'pediatric',
     name: 'Pediatric Ward',
-    totalBeds: 10,
+    totalBeds: 9,
   },
   {
     id: 'nicu',
     name: 'NICU',
-    totalBeds: 5,
+    totalBeds: 8,
   },
   {
     id: 'icu',
     name: 'ICU',
     totalBeds: 5,
+  },
+  {
+    id: 'maternal',
+    name: 'Material Ward',
+    totalBeds: 7,
   }
 ];
 
