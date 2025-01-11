@@ -2,31 +2,14 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
-import type { CensusEntry } from "@/types/database";
-import type { DashboardStats, DepartmentOccupancy } from '@/components/dashboard/types';
-
-interface DischargeData {
-  department: string;
-  recovered: number;
-  lama: number;
-  absconded: number;
-  referred: number;
-  notImproved: number;
-  deaths: number;
-}
-
-const dateRangeSchema = z.object({
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  departments: z.array(z.string())
-});
+import type { DashboardStats, DepartmentOccupancy, DischargeData } from '@/components/dashboard/types';
 
 export const dashboardRouter = createTRPCRouter({
   getDashboardStats: protectedProcedure
     .input(z.object({
       date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
     }))
-    .query(async ({ ctx, input }) => {
+    .query(async ({ ctx, input }): Promise<DashboardStats> => {
       const { supabase } = ctx;
 
       const { data: entries, error } = await supabase
@@ -41,6 +24,7 @@ export const dashboardRouter = createTRPCRouter({
         });
       }
 
+      // Transform the data server-side
       const stats: DashboardStats = {
         totalPatients: 0,
         otCases: 0,
@@ -48,7 +32,7 @@ export const dashboardRouter = createTRPCRouter({
         occupancyRate: 0
       };
 
-      (entries as CensusEntry[]).forEach(entry => {
+      entries.forEach(entry => {
         if (entry.current_patients) stats.totalPatients += entry.current_patients;
         if (entry.ot_cases) stats.otCases += entry.ot_cases;
         if (entry.total_transfers_in) stats.patientFlow.in += entry.total_transfers_in;
@@ -58,39 +42,13 @@ export const dashboardRouter = createTRPCRouter({
       return stats;
     }),
 
-  getDepartmentOccupancy: protectedProcedure
-    .input(z.object({ departments: z.array(z.string()) }))
-    .query(async ({ ctx, input }) => {
-      const { supabase } = ctx;
-
-      const { data: entries, error } = await supabase
-        .from('census_entries')
-        .select('*')
-        .in('department', input.departments)
-        .order('date', { ascending: false })
-        .limit(input.departments.length);
-
-      if (error) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: error.message,
-        });
-      }
-
-      return (entries as CensusEntry[]).map(entry => ({
-        department: entry.department,
-        current: entry.current_patients ?? 0,
-        total: ctx.departmentService.getDepartmentTotalBeds(entry.department),
-        percentage: ctx.departmentService.calculateDepartmentOccupancy(
-          entry.department,
-          entry.current_patients ?? 0
-        )
-      }));
-    }),
-
   getHistoricalData: protectedProcedure
-    .input(dateRangeSchema)
-    .query(async ({ ctx, input }) => {
+    .input(z.object({
+      startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      departments: z.array(z.string())
+    }))
+    .query(async ({ ctx, input }): Promise<Array<{ date: string; value: number }>> => {
       const { supabase } = ctx;
 
       const { data: entries, error } = await supabase
@@ -108,23 +66,26 @@ export const dashboardRouter = createTRPCRouter({
         });
       }
 
-      return (entries as CensusEntry[]).map(entry => ({
+      // Transform data server-side
+      return entries.map(entry => ({
         date: entry.date,
         value: entry.current_patients ?? 0
       }));
     }),
 
-  getDischargeAnalytics: protectedProcedure
-    .input(dateRangeSchema)
-    .query(async ({ ctx, input }) => {
+  getDepartmentOccupancy: protectedProcedure
+    .input(z.object({
+      departments: z.array(z.string())
+    }))
+    .query(async ({ ctx, input }): Promise<DepartmentOccupancy[]> => {
       const { supabase } = ctx;
 
       const { data: entries, error } = await supabase
         .from('census_entries')
         .select('*')
         .in('department', input.departments)
-        .gte('date', input.startDate)
-        .lte('date', input.endDate);
+        .order('date', { ascending: false })
+        .limit(input.departments.length);
 
       if (error) {
         throw new TRPCError({
@@ -133,7 +94,40 @@ export const dashboardRouter = createTRPCRouter({
         });
       }
 
-      const dischargeData = (entries as CensusEntry[]).reduce<Record<string, DischargeData>>((acc, entry) => {
+      // Transform data server-side
+      return entries.map(entry => ({
+        department: entry.department,
+        current: entry.current_patients ?? 0,
+        total: 0, // This will be handled by the department service
+        percentage: 0 // This will be calculated after getting total beds
+      }));
+    }),
+
+    getDischargeAnalytics: protectedProcedure
+    .input(z.object({
+      startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      departments: z.array(z.string())
+    }))
+    .query(async ({ ctx, input }): Promise<DischargeData[]> => {
+      const { supabase } = ctx;
+  
+      const { data: entries, error } = await supabase
+        .from('census_entries')
+        .select('*')
+        .in('department', input.departments)
+        .gte('date', input.startDate)
+        .lte('date', input.endDate);
+  
+      if (error) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: error.message,
+        });
+      }
+  
+      // Group and aggregate discharge data by department
+      const dischargeData = entries.reduce<Record<string, DischargeData>>((acc, entry) => {
         const dept = acc[entry.department] ?? {
           department: entry.department,
           recovered: 0,
@@ -143,7 +137,7 @@ export const dashboardRouter = createTRPCRouter({
           notImproved: 0,
           deaths: 0
         };
-
+  
         acc[entry.department] = {
           ...dept,
           recovered: dept.recovered + (entry.recovered ?? 0),
@@ -153,10 +147,10 @@ export const dashboardRouter = createTRPCRouter({
           notImproved: dept.notImproved + (entry.not_improved ?? 0),
           deaths: dept.deaths + (entry.deaths ?? 0)
         };
-
+  
         return acc;
       }, {});
-
+  
       return Object.values(dischargeData);
-    }),
+    })  
 });

@@ -14,7 +14,7 @@ const createContext = cache(async () => {
 
   return createTRPCContext({
     headers: heads,
-    departmentService
+    departmentService // Now properly typed in CreateContextOptions
   });
 });
 
