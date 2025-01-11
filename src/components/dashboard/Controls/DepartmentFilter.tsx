@@ -25,14 +25,20 @@ interface DepartmentFilterProps {
 }
 
 export function DepartmentFilter({
-  departments,
-  selectedDepartments,
+  departments = [], // Add default value
+  selectedDepartments = [], // Add default value
   onSelectionChange,
   className,
 }: DepartmentFilterProps) {
   const [open, setOpen] = React.useState(false);
 
+  // Add null checks before operations
   const toggleDepartment = (departmentId: string) => {
+    if (!Array.isArray(selectedDepartments)) {
+      onSelectionChange([departmentId]);
+      return;
+    }
+
     const isSelected = selectedDepartments.includes(departmentId);
     if (isSelected) {
       onSelectionChange(selectedDepartments.filter(id => id !== departmentId));
@@ -50,9 +56,9 @@ export function DepartmentFilter({
           aria-expanded={open}
           className={cn("w-full justify-between", className)}
         >
-          {selectedDepartments.length === 0
+          {Array.isArray(selectedDepartments) && selectedDepartments.length === 0
             ? "Select departments"
-            : `${selectedDepartments.length} selected`}
+            : `${selectedDepartments?.length ?? 0} selected`}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -61,7 +67,7 @@ export function DepartmentFilter({
           <CommandInput placeholder="Search departments..." />
           <CommandEmpty>No department found.</CommandEmpty>
           <CommandGroup>
-            {departments.map((department) => (
+            {(departments ?? []).map((department) => (
               <CommandItem
                 key={department.id}
                 onSelect={() => toggleDepartment(department.id)}
@@ -69,7 +75,7 @@ export function DepartmentFilter({
                 <Check
                   className={cn(
                     "mr-2 h-4 w-4",
-                    selectedDepartments.includes(department.id)
+                    (selectedDepartments ?? []).includes(department.id)
                       ? "opacity-100"
                       : "opacity-0"
                   )}
