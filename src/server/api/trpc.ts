@@ -1,3 +1,4 @@
+// src/server/api/trpc.ts
 /**
  * 1. CONTEXT
  *
@@ -8,8 +9,7 @@
  */
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-// import { Session } from '@supabase/supabase-js'; 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { type Database } from '@/types/database';
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from 'next/headers';
@@ -39,7 +39,6 @@ export interface CreateContextOptions {
 /**
  * Inner context creation with validated options
  */
-// changed to fix type handling
 type TRPCContext = {
   supabase: SupabaseClient<Database>;
   user: {
@@ -62,7 +61,7 @@ const createInnerTRPCContext = (opts: CreateInnerContextOptions): TRPCContext =>
  */
 export const createTRPCContext = async (_opts: CreateContextOptions) => {
   // Create a Supabase client with the request headers
-  const supabase = createServerClient(
+  const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -105,7 +104,6 @@ export const createTRPCContext = async (_opts: CreateContextOptions) => {
     departmentService,
   });
 };
-
 /**
  * 2. INITIALIZATION
  *
