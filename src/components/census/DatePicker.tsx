@@ -6,7 +6,6 @@ import { type CensusEntry, type CensusFormData } from "@/lib/schemas/census";
 import { api } from "@/lib/api";
 import { format } from "date-fns";
 
-
 interface DatePickerProps {
   form: UseFormReturn<CensusFormData>;
   department: string;
@@ -19,10 +18,10 @@ export function DatePicker({
   onSelect = () => void 0     // provide default value for onSelect
 }: DatePickerProps) {
   const { data: existingEntry } = api.census.getByDate.useQuery({
-       date: form.getValues("date"),
-      department
-     }) as { data: CensusEntry | null };
-    
+    date: form.getValues("date"),
+    department
+  }) as { data: CensusEntry | null };
+      
   return (
     <FormField
       control={form.control}
@@ -49,35 +48,3 @@ export function DatePicker({
     />
   );
 }
-
-// export function DatePicker({ form, department }: DatePickerProps) {
-//   const { data: existingEntry } = api.census.getByDate.useQuery({
-//     date: form.getValues("date"),
-//     department
-//   }) as { data: CensusEntry | null };
-
-//   return (
-//     <FormField
-//       control={form.control}
-//       name="date"
-//       render={({ field }) => (
-//         <FormItem>
-//           <FormLabel>Date</FormLabel>
-//           <Calendar
-//             mode="single"
-//             selected={field.value}
-//             onSelect={(date) => {
-//               if (date && !existingEntry) {
-//                 field.onChange(date);
-//               }
-//             }}
-//             disabled={(date) => {
-//               // Disable future dates and dates with existing entries
-//               return date > new Date() || Boolean(existingEntry);
-//             }}
-//           />
-//         </FormItem>
-//       )}
-//     />
-//   );
-// }

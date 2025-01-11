@@ -1,18 +1,22 @@
+// src/lib/services/departmentService.ts
 import { DEPARTMENTS } from '@/components/dashboard/config/departments';
 import type { Department } from '@/components/dashboard/types';
 
 class DepartmentService {
   private departments: Department[] = DEPARTMENTS;
+  private _allDepartments: Department[] | null = null;
 
   // Get all departments including sub-units
   getAllDepartments(): Department[] {
-    return this.departments.reduce<Department[]>((all, dept) => {
+    if (this._allDepartments) return this._allDepartments;
+    this._allDepartments = this.departments.reduce<Department[]>((all, dept) => {
       all.push(dept);
       if (dept.subUnits) {
         all.push(...dept.subUnits);
       }
       return all;
     }, []);
+    return this._allDepartments;
   }
 
   // Get department by ID

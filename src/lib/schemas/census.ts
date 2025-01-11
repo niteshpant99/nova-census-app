@@ -2,6 +2,8 @@
 import { z } from "zod";
 // import type { Database } from "@/types/database";
 
+// TODO: NEED TO CHECK IF IT MATCHES OUR SUPABASE SCHEMA
+
 // Type alias for the database census entry
 // type DatabaseCensusEntry = Database["public"]["Tables"]["census_entries"]["Row"];
 

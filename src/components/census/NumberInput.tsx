@@ -7,13 +7,12 @@ import { type CensusFormData } from '@/lib/schemas/census';
 import { cn } from "@/lib/utils";
 
 interface NumberInputProps {
-  form: UseFormReturn<CensusFormData>; 
+  form: UseFormReturn<CensusFormData>;
   name: keyof CensusFormData; // Ensure name is one of the keys of CensusFormData
   label: string;
   className?: string;
 }
 
-// Make sure to destructure className from props
 export function NumberInput({ form, name, label, className }: NumberInputProps) {
   return (
     <FormField
@@ -29,7 +28,6 @@ export function NumberInput({ form, name, label, className }: NumberInputProps) 
               pattern="[0-9]*"
               min="0"
               {...field}
-              // Use cn utility to combine classes
               className={cn(
                 "bg-background",
                 className

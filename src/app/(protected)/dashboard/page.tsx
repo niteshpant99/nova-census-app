@@ -1,23 +1,25 @@
+// src/app/(protected)/dashboard/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { type DateRange } from 'react-day-picker';
 import { Card } from '@/components/ui/card';
 import { 
-  StatsGrid,
-  HistoricalChart,
-  OccupancyChart,
-  DischargeChart,
-  TrendsChart,
-  DateRangeSelector,
-  DepartmentFilter,
-  MetricToggle,
-  DEPARTMENTS,
-  getAllDepartments
+  StatsGrid, 
+  HistoricalChart, 
+  OccupancyChart, 
+  DischargeChart, 
+  TrendsChart, 
+  DateRangeSelector, 
+  DepartmentFilter, 
+  MetricToggle, 
+  DEPARTMENTS, 
+  getAllDepartments 
 } from '@/components/dashboard';
-
 import { useDashboardData } from '@/lib/hooks/useDashboardData';
 import { DASHBOARD_METRICS } from '@/components/dashboard/Controls/MetricToggle';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorBoundary } from '@/components/error-boundary/FormErrorBoundary';
 
 export default function DashboardPage() {
   // State management
@@ -33,13 +35,7 @@ export default function DashboardPage() {
   );
 
   // Fetch dashboard data using our custom hook
-  const {
-    stats,
-    occupancy,
-    historical,
-    discharges,
-    isLoading
-  } = useDashboardData(dateRange, selectedDepartments);
+  const { stats, occupancy, historical, discharges, isLoading } = useDashboardData(dateRange, selectedDepartments);
 
   return (
     <div className="min-h-screen bg-background">
@@ -84,36 +80,52 @@ export default function DashboardPage() {
         <div className="grid gap-6 md:grid-cols-2">
           {/* Historical Overview */}
           <Card className="col-span-2">
-            <HistoricalChart
-              data={historical ?? []}
-              isLoading={isLoading}
-            />
+            <Suspense fallback={<Skeleton className="h-[300px]" />}>
+              <ErrorBoundary>
+                <HistoricalChart
+                  data={historical ?? []}
+                  isLoading={isLoading}
+                />
+              </ErrorBoundary>
+            </Suspense>
           </Card>
 
           {/* Department Occupancy */}
           <Card>
-            <OccupancyChart
-              data={occupancy ?? []}
-              isLoading={isLoading}
-            />
+            <Suspense fallback={<Skeleton className="h-[300px]" />}>
+              <ErrorBoundary>
+                <OccupancyChart
+                  data={occupancy ?? []}
+                  isLoading={isLoading}
+                />
+              </ErrorBoundary>
+            </Suspense>
           </Card>
 
           {/* Discharge Analysis */}
           <Card>
-            <DischargeChart
-              data={discharges ?? []}
-              isLoading={isLoading}
-            />
+            <Suspense fallback={<Skeleton className="h-[300px]" />}>
+              <ErrorBoundary>
+                <DischargeChart
+                  data={discharges ?? []}
+                  isLoading={isLoading}
+                />
+              </ErrorBoundary>
+            </Suspense>
           </Card>
 
           {/* Trends Analysis */}
           {selectedMetrics.length > 0 && (
             <Card className="col-span-2">
-              <TrendsChart
-                data={historical ?? []}
-                metrics={selectedMetrics}
-                isLoading={isLoading}
-              />
+              <Suspense fallback={<Skeleton className="h-[300px]" />}>
+                <ErrorBoundary>
+                  <TrendsChart
+                    data={historical ?? []}
+                    metrics={selectedMetrics}
+                    isLoading={isLoading}
+                  />
+                </ErrorBoundary>
+              </Suspense>
             </Card>
           )}
         </div>

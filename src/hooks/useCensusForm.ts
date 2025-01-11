@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { censusEntrySchema, type CensusFormData } from '@/lib/schemas/census';
 import type { TRPCClientErrorLike } from '@trpc/client';
 import type { AppRouter } from '@/server/api/root';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface UseCensusFormOptions {
   initialDepartment: string;
@@ -18,6 +19,7 @@ export function useCensusForm({ initialDepartment }: UseCensusFormOptions) {
   const [showCalendar, setShowCalendar] = useState(false);
   const [isReviewing, setIsReviewing] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const form = useForm<CensusFormData>({
     resolver: zodResolver(censusEntrySchema),
@@ -46,6 +48,12 @@ export function useCensusForm({ initialDepartment }: UseCensusFormOptions) {
       });
       form.reset();
       setIsReviewing(false);
+      // Invalidate the queries
+      queryClient.invalidateQueries({ queryKey: ['dashboard.getDashboardStats'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard.getHistoricalData'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard.getDepartmentOccupancy'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard.getDischargeAnalytics'] });
+      queryClient.invalidateQueries({ queryKey: ['census.getByDate'] });
     },
     onError: (err: TRPCClientErrorLike<AppRouter>) => {
       toast({
@@ -76,13 +84,11 @@ export function useCensusForm({ initialDepartment }: UseCensusFormOptions) {
       };
 
       const messageResponse = await generateMessageMutation.mutateAsync(processedData);
-
       await navigator.clipboard.writeText(messageResponse.message);
       toast({
         title: "Message Copied",
         description: "WhatsApp message copied to clipboard",
       });
-
       await submitMutation.mutateAsync(processedData);
     } catch (error) {
       console.error('Form submission failed:', error);

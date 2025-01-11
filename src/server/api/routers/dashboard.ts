@@ -1,11 +1,10 @@
 // src/server/api/routers/dashboard.ts
-
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import type { CensusEntry } from "@/types/database";
+import type { DashboardStats, DepartmentOccupancy } from '@/components/dashboard/types';
 
-// Add this interface near the top of the file with your other types
 interface DischargeData {
   department: string;
   recovered: number;
@@ -41,31 +40,26 @@ export const dashboardRouter = createTRPCRouter({
           message: error.message,
         });
       }
-      
-      
-      return entries as CensusEntry[]; // Return the raw entries
 
-      // // Calculate totals from the day's entries
-      // const stats = (entries as CensusEntry[]).reduce((acc, entry) => ({
-      //   totalPatients: acc.totalPatients + (entry.current_patients ?? 0),
-      //   otCases: acc.otCases + (entry.ot_cases ?? 0),
-      //   patientFlow: {
-      //     in: acc.patientFlow.in + ((entry.total_transfers_in ?? 0)),
-      //     out: acc.patientFlow.out + ((entry.total_transfers_out ?? 0))
-      //   }
-      // }), {
-      //   totalPatients: 0,
-      //   otCases: 0,
-      //   patientFlow: { in: 0, out: 0 }
-      // });
+      const stats: DashboardStats = {
+        totalPatients: 0,
+        otCases: 0,
+        patientFlow: { in: 0, out: 0 },
+        occupancyRate: 0
+      };
 
-      // return stats;
+      (entries as CensusEntry[]).forEach(entry => {
+        if (entry.current_patients) stats.totalPatients += entry.current_patients;
+        if (entry.ot_cases) stats.otCases += entry.ot_cases;
+        if (entry.total_transfers_in) stats.patientFlow.in += entry.total_transfers_in;
+        if (entry.total_transfers_out) stats.patientFlow.out += entry.total_transfers_out;
+      });
+
+      return stats;
     }),
 
   getDepartmentOccupancy: protectedProcedure
-    .input(z.object({
-      departments: z.array(z.string())
-    }))
+    .input(z.object({ departments: z.array(z.string()) }))
     .query(async ({ ctx, input }) => {
       const { supabase } = ctx;
 
@@ -74,7 +68,7 @@ export const dashboardRouter = createTRPCRouter({
         .select('*')
         .in('department', input.departments)
         .order('date', { ascending: false })
-        .limit(input.departments.length); // Get latest entry for each department
+        .limit(input.departments.length);
 
       if (error) {
         throw new TRPCError({
@@ -83,7 +77,15 @@ export const dashboardRouter = createTRPCRouter({
         });
       }
 
-      return entries;
+      return (entries as CensusEntry[]).map(entry => ({
+        department: entry.department,
+        current: entry.current_patients ?? 0,
+        total: ctx.departmentService.getDepartmentTotalBeds(entry.department),
+        percentage: ctx.departmentService.calculateDepartmentOccupancy(
+          entry.department,
+          entry.current_patients ?? 0
+        )
+      }));
     }),
 
   getHistoricalData: protectedProcedure
@@ -106,10 +108,13 @@ export const dashboardRouter = createTRPCRouter({
         });
       }
 
-      return entries;
+      return (entries as CensusEntry[]).map(entry => ({
+        date: entry.date,
+        value: entry.current_patients ?? 0
+      }));
     }),
 
-    getDischargeAnalytics: protectedProcedure
+  getDischargeAnalytics: protectedProcedure
     .input(dateRangeSchema)
     .query(async ({ ctx, input }) => {
       const { supabase } = ctx;
@@ -128,31 +133,30 @@ export const dashboardRouter = createTRPCRouter({
         });
       }
 
-      // Aggregate discharge data by department
-    const dischargeData = (entries as CensusEntry[]).reduce<Record<string, DischargeData>>((acc, entry) => {
-      const dept = acc[entry.department] ?? {
-        department: entry.department,
-        recovered: 0,
-        lama: 0,
-        absconded: 0,
-        referred: 0,
-        notImproved: 0,
-        deaths: 0
-      };
+      const dischargeData = (entries as CensusEntry[]).reduce<Record<string, DischargeData>>((acc, entry) => {
+        const dept = acc[entry.department] ?? {
+          department: entry.department,
+          recovered: 0,
+          lama: 0,
+          absconded: 0,
+          referred: 0,
+          notImproved: 0,
+          deaths: 0
+        };
 
-      acc[entry.department] = {
-        ...dept,
-        recovered: dept.recovered + (entry.recovered ?? 0),
-        lama: dept.lama + (entry.lama ?? 0),
-        absconded: dept.absconded + (entry.absconded ?? 0),
-        referred: dept.referred + (entry.referred_out ?? 0),
-        notImproved: dept.notImproved + (entry.not_improved ?? 0),
-        deaths: dept.deaths + (entry.deaths ?? 0)
-      };
+        acc[entry.department] = {
+          ...dept,
+          recovered: dept.recovered + (entry.recovered ?? 0),
+          lama: dept.lama + (entry.lama ?? 0),
+          absconded: dept.absconded + (entry.absconded ?? 0),
+          referred: dept.referred + (entry.referred_out ?? 0),
+          notImproved: dept.notImproved + (entry.not_improved ?? 0),
+          deaths: dept.deaths + (entry.deaths ?? 0)
+        };
 
-      return acc;
-    }, {});
+        return acc;
+      }, {});
 
-    return Object.values(dischargeData);
-  }),
+      return Object.values(dischargeData);
+    }),
 });
