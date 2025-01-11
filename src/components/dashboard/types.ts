@@ -22,8 +22,9 @@ export interface Department {
 
 // Chart data types
 export interface ChartDataPoint {
-  date: string;
+  date: string;  // ISO date string format
   value: number;
+  metadata?: Record<string, unknown>;  // More strict than any
   department?: string;
 }
 

@@ -16,6 +16,12 @@
  * - Focus is on getting core functionality working
  */
 
+# work related to fixing total patient addition on sql vs webapp
+- [ ] Optimize patient count aggregation by moving it to database level using SQL GROUP BY and SUM
+- [ ] Add appropriate indexes for date and department columns
+- [ ] Consider materialized view for commonly accessed date ranges
+
+
  # need to make sure that there is no double addition, here is my census_entries table default values and value type: 
  [
   {

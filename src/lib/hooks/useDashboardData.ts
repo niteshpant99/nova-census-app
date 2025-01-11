@@ -26,7 +26,7 @@ export function useDashboardData(dateRange: DateRange | undefined, selectedDepar
 
   // Get historical data
   const {
-    data: historical,
+    data: historicalData,
     isLoading: isLoadingHistorical,
   } = api.dashboard.getHistoricalData.useQuery(
     selectedDepartments.length > 0 && startDate && endDate
@@ -36,7 +36,16 @@ export function useDashboardData(dateRange: DateRange | undefined, selectedDepar
           departments: selectedDepartments
         }
       : skipToken,
-    queryOptions
+    {
+      ...queryOptions,
+      // Transform the data to match ChartDataPoint type
+      select: (data) => data.map(item => ({
+        date: item.date,
+        value: item.current_patients,
+        // Include the original data for potential future use
+        metadata: { current_patients: item.current_patients }
+      }))
+    }
   );
 
   // Get department occupancy
@@ -67,7 +76,7 @@ export function useDashboardData(dateRange: DateRange | undefined, selectedDepar
 
   return {
     stats,
-    historical,
+    historical: historicalData,
     occupancy,
     discharges,
     isLoading: isLoadingStats || isLoadingHistorical || 
