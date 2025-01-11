@@ -63,6 +63,6 @@ export const config = {
     '/dashboard/:path*',
     '/census/:path*',
     // Exclude login page and static assets from middleware
-    '/((?!login|api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!login|api|_next/static|_next/image|nova-favicon.svg).*)',
   ],
 }
