@@ -30,13 +30,16 @@ export const DateRangeSelector = React.memo(function DateRangeSelector({
     },
     [onDateChange]
   );
+   // Add default range display formatting
+   const dateDisplay = date?.from && date?.to 
+   ? `${format(date.from, "LLL dd, y")} - ${format(date.to, "LLL dd, y")}`
+   : "Select date range";
 
-  return (
+   return (
     <div className={cn("grid gap-2", className)}>
       <Popover>
         <PopoverTrigger asChild>
           <Button
-            id="date"
             variant="outline"
             className={cn(
               "w-full justify-start text-left font-normal",
@@ -44,18 +47,7 @@ export const DateRangeSelector = React.memo(function DateRangeSelector({
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {date?.from ? (
-              date.to ? (
-                <>
-                  {format(date.from, "LLL dd, y")} -{" "}
-                  {format(date.to, "LLL dd, y")}
-                </>
-              ) : (
-                format(date.from, "LLL dd, y")
-              )
-            ) : (
-              <span>Pick a date range</span>
-            )}
+            {dateDisplay}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="end">
@@ -64,7 +56,7 @@ export const DateRangeSelector = React.memo(function DateRangeSelector({
             mode="range"
             defaultMonth={date?.from}
             selected={date}
-            onSelect={handleDateChange}
+            onSelect={onDateChange}
             numberOfMonths={2}
             disabled={(date) => date > new Date()}
           />

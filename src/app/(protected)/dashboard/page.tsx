@@ -20,19 +20,29 @@ import { useDashboardData } from '@/lib/hooks/useDashboardData';
 import { DASHBOARD_METRICS } from '@/components/dashboard/Controls/MetricToggle';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorBoundary } from '@/components/error-boundary/FormErrorBoundary';
+import { subDays } from 'date-fns';
 
 export default function DashboardPage() {
-  // State management
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: new Date(),
-    to: new Date()
-  });
+  // Calculate default date range
+  const defaultDateRange: DateRange = {
+    from: subDays(new Date(), 6), // 6 days ago (to include today = 7 days total)
+    to: new Date() // Today
+  };
+
+  
+  // Initialize state with default range
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(defaultDateRange);
+
+  // State management (default)
+  // const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: new Date(), to: new Date() });
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>(
     getAllDepartments().map(d => d.id)
   );
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>(
     DASHBOARD_METRICS.slice(0, 3).map(m => m.id) // Default to first 3 metrics
   );
+
+  
 
   // Fetch dashboard data using our custom hook
   const { stats, occupancy, historical, discharges, isLoading } = useDashboardData(dateRange, selectedDepartments);
@@ -50,11 +60,11 @@ export default function DashboardPage() {
       <div className="container mx-auto px-4 py-4">
         <Card className="p-4 space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <DateRangeSelector
-              date={dateRange}
-              onDateChange={setDateRange}
-              className="w-full"
-            />
+              <DateRangeSelector
+                date={dateRange}
+                onDateChange={setDateRange}
+                className="w-full"
+              />
             <DepartmentFilter
               departments={DEPARTMENTS}
               selectedDepartments={selectedDepartments}
