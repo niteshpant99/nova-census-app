@@ -28,18 +28,21 @@ export default function DashboardPage() {
     from: subDays(new Date(), 6), // 6 days ago (to include today = 7 days total)
     to: new Date() // Today
   };
+
   
   // Initialize state with default range
   const [dateRange, setDateRange] = useState<DateRange | undefined>(defaultDateRange);
 
   // State management (default)
   // const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: new Date(), to: new Date() });
-  
+  const [selectedDepartments, setSelectedDepartments] = useState<string[]>(
+    getAllDepartments().map(d => d.id)
+  );
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>(
     DASHBOARD_METRICS.slice(0, 3).map(m => m.id) // Default to first 3 metrics
   );
 
-  const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
+  
 
   // Fetch dashboard data using our custom hook
   const { stats, occupancy, historical, discharges, isLoading } = useDashboardData(dateRange, selectedDepartments);
@@ -62,12 +65,12 @@ export default function DashboardPage() {
                 onDateChange={setDateRange}
                 className="w-full"
               />
-              <DepartmentFilter
-                  departments={DEPARTMENTS}
-                  selectedDepartments={selectedDepartments}
-                  onSelectionChange={setSelectedDepartments}
-                  className="w-full"
-                />
+            <DepartmentFilter
+              departments={DEPARTMENTS}
+              selectedDepartments={selectedDepartments}
+              onSelectionChange={setSelectedDepartments}
+              className="w-full"
+            />
             <MetricToggle
               metrics={DASHBOARD_METRICS}
               selectedMetrics={selectedMetrics}
