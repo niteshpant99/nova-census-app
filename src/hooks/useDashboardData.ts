@@ -2,11 +2,16 @@
 import { api } from '@/lib/api';
 import { type DateRange } from 'react-day-picker';
 import { skipToken } from '@tanstack/react-query';
+import type { 
+  DashboardStats, 
+  DepartmentOccupancy, 
+  DischargeData,
+  ChartDataPoint 
+} from '@/components/dashboard/types';
 
 export function useDashboardData(dateRange: DateRange | undefined, selectedDepartments: string[]) {
   // Get today's date in YYYY-MM-DD format as a fallback
   const today = new Date().toISOString().split('T')[0];
-  // Ensure we always have valid date strings
   const startDate = dateRange?.from ? dateRange.from.toISOString().split('T')[0] : today;
   const endDate = dateRange?.to ? dateRange.to.toISOString().split('T')[0] : today;
 
@@ -18,15 +23,12 @@ export function useDashboardData(dateRange: DateRange | undefined, selectedDepar
 
   // Get current stats
   const {
-    data: statsData,
+    data: stats,
     isLoading: isLoadingStats,
     isError: isErrorStats,
   } = api.dashboard.getDashboardStats.useQuery(
     selectedDepartments.length > 0 && endDate ? { date: endDate } : skipToken,
-    {
-      ...queryOptions,
-      enabled: selectedDepartments.length > 0 && !!endDate
-    }
+    queryOptions
   );
 
   // Get historical data
@@ -44,30 +46,38 @@ export function useDashboardData(dateRange: DateRange | undefined, selectedDepar
       : skipToken,
     {
       ...queryOptions,
-      enabled: selectedDepartments.length > 0 && !!startDate && !!endDate
+      enabled: selectedDepartments.length > 0 && !!startDate && !!endDate,
+      // Transform the data to match ChartDataPoint type
+      select: (data) => {
+        if (!data || !Array.isArray(data)) return [];
+        
+        return data.map(item => ({
+          date: item.date,
+          value: item.current_patients ?? 0,
+          // Include the original data for potential future use
+          metadata: { rawData: item }
+        })) as ChartDataPoint[];
+      }
     }
   );
 
   // Get department occupancy
   const {
-    data: occupancyData,
+    data: occupancy,
     isLoading: isLoadingOccupancy,
-    isError: isErrorOccupancy
+    isError: isErrorOccupancy,
   } = api.dashboard.getDepartmentOccupancy.useQuery(
     selectedDepartments.length > 0
       ? { departments: selectedDepartments }
       : skipToken,
-    {
-      ...queryOptions,
-      enabled: selectedDepartments.length > 0,
-    }
+    queryOptions
   );
 
-  // Get discharge data
+  // Get discharge analytics
   const {
-    data: dischargeData,
-    isLoading: isLoadingDischarge,
-    isError: isErrorDischarge
+    data: discharges,
+    isLoading: isLoadingDischarges,
+    isError: isErrorDischarges,
   } = api.dashboard.getDischargeAnalytics.useQuery(
     selectedDepartments.length > 0 && startDate && endDate
       ? {
@@ -82,15 +92,25 @@ export function useDashboardData(dateRange: DateRange | undefined, selectedDepar
     }
   );
 
-  const isLoading = isLoadingStats || isLoadingHistorical ||
-    isLoadingOccupancy || isLoadingDischarge;
-  const isError = isErrorStats || isErrorHistorical || isErrorOccupancy || isErrorDischarge;
+  // Combined loading and error states
+  const isLoading = 
+    isLoadingStats || 
+    isLoadingHistorical || 
+    isLoadingOccupancy || 
+    isLoadingDischarges;
 
+  const isError = 
+    isErrorStats || 
+    isErrorHistorical || 
+    isErrorOccupancy || 
+    isErrorDischarges;
+
+  // Return normalized and type-safe data
   return {
-    stats: statsData,
-    historical: historicalData,
-    occupancy: occupancyData,
-    discharges: dischargeData,
+    stats: stats,
+    historical: historicalData ?? [],
+    occupancy: occupancy,
+    discharges: discharges,
     isLoading,
     isError
   };
