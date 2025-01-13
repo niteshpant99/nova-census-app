@@ -18,11 +18,52 @@ interface HistoricalChartProps {
 }
 
 export function HistoricalChart({ data, isLoading }: HistoricalChartProps) {
-  // Add error boundary protection
-  if (!Array.isArray(data)) {
-    console.error('Invalid data provided to HistoricalChart:', data);
-    return null;
-  }
+  // Type-safe formatting functions
+  const formatXAxisDate = (dateStr: string): string => {
+    // Validate date string
+    if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return 'Invalid Date';
+    }
+
+    try {
+      const date = new Date(dateStr);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+      }
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid Date';
+    }
+  };
+
+  const formatTooltipDate = (dateStr: string): string => {
+    // Validate date string
+    if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return 'Invalid Date';
+    }
+
+    try {
+      const date = new Date(dateStr);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+      }
+      return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formatting tooltip date:', error);
+      return 'Invalid Date';
+    }
+  };
 
   if (isLoading) {
     return (
@@ -32,6 +73,12 @@ export function HistoricalChart({ data, isLoading }: HistoricalChartProps) {
         </div>
       </Card>
     );
+  }
+
+  // Validate data
+  if (!Array.isArray(data)) {
+    console.error('Invalid data provided to HistoricalChart:', data);
+    return null;
   }
 
   return (
@@ -46,13 +93,7 @@ export function HistoricalChart({ data, isLoading }: HistoricalChartProps) {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis 
               dataKey="date"
-              tickFormatter={(dateStr) => {
-                const date = new Date(dateStr);
-                return date.toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric'
-                });
-              }}
+              tickFormatter={formatXAxisDate}
             />
             <YAxis 
               allowDecimals={false}
@@ -60,15 +101,7 @@ export function HistoricalChart({ data, isLoading }: HistoricalChartProps) {
             />
             <Tooltip
               formatter={(value: number) => [`${value} patients`, 'Total Patients']}
-              labelFormatter={(dateStr) => {
-                const date = new Date(dateStr);
-                return date.toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                });
-              }}
+              labelFormatter={formatTooltipDate}
             />
             <Bar 
               dataKey="value"
