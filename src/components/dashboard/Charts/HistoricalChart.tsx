@@ -81,6 +81,10 @@ export function HistoricalChart({ data, isLoading }: HistoricalChartProps) {
     return null;
   }
 
+  // Log the actual values being used
+  console.log('First data point:', data[0]);
+  console.log('Sample formatted date:', data[0]?.date ? formatXAxisDate(data[0].date) : 'No date');
+
   return (
     <Card className="p-4">
       <h3 className="text-lg font-medium mb-4">Daily Patient Census</h3>
@@ -103,12 +107,19 @@ export function HistoricalChart({ data, isLoading }: HistoricalChartProps) {
               formatter={(value: number) => [`${value} patients`, 'Total Patients']}
               labelFormatter={formatTooltipDate}
             />
-            <Bar 
-              dataKey="value"
-              fill="hsl(var(--primary))"
-              name="Total Patients"
-              radius={[4, 4, 0, 0]}
-            />
+              <Bar
+                dataKey="current_patients"
+                fill="hsl(var(--primary))"
+                name="Total Patients"
+                radius={[4, 4, 0, 0]}
+              />
+              <Tooltip
+                formatter={(value: number) => [
+                  `${value} patients`,
+                  'Total Patients'
+                ]}
+                labelFormatter={formatTooltipDate}
+              />
           </BarChart>
         </ResponsiveContainer>
       </div>

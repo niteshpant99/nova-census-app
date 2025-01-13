@@ -47,16 +47,14 @@ export function useDashboardData(dateRange: DateRange | undefined, selectedDepar
     {
       ...queryOptions,
       enabled: selectedDepartments.length > 0 && !!startDate && !!endDate,
-      // Transform the data to match ChartDataPoint type
       select: (data) => {
         if (!data || !Array.isArray(data)) return [];
         
         return data.map(item => ({
           date: item.date,
-          value: item.current_patients ?? 0,
-          // Include the original data for potential future use
+          value: item.current_patients,
           metadata: { rawData: item }
-        })) as ChartDataPoint[];
+        }));
       }
     }
   );

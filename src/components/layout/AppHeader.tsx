@@ -1,3 +1,4 @@
+// src/components/layout/AppHeader.tsx
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,27 +13,26 @@ export function AppHeader() {
   useEffect(() => {
     async function getProfile() {
       try {
-          // Get the full response first
-          const sessionResponse = await supabase.auth.getSession();
-          const userId = sessionResponse.data.session?.user?.id;
-          
-          
-          const { data, error } = await supabase
-            .from('user_profiles')
-            .select('*')
-            .eq('id', userId)
-            .single<UserProfile>();
+        // Get authenticated user first
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !user?.id) {
+          console.error('Auth error:', userError);
+          return;
+        }
 
-          if (!userId) {
-            return;
-          }
-          
+        // Then fetch the profile
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single<UserProfile>();
+
         if (error) {
           console.error('Profile fetch error:', error);
           return;
         }
 
-        // We can safely assert this type because it matches our database schema
         setUserProfile(data);
       } catch (error) {
         console.error('Unexpected error:', error);

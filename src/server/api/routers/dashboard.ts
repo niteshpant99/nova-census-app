@@ -42,48 +42,71 @@ export const dashboardRouter = createTRPCRouter({
       return stats;
     }),
 
-  getHistoricalData: protectedProcedure
-    .input(z.object({
-      startDate: z.string(),
-      endDate: z.string(),
-      departments: z.array(z.string())
-    }))
-    .query(async ({ ctx, input }): Promise<Array<{ date: string; current_patients: number }>> => {
-      const { supabase } = ctx;
-      
-      console.log('Input params:', input); // Debug log
+    getHistoricalData: protectedProcedure
+  .input(z.object({
+    startDate: z.string(),
+    endDate: z.string(),
+    departments: z.array(z.string())
+  }))
+  .query(async ({ ctx, input }): Promise<Array<{ date: string; current_patients: number }>> => {
+    const { supabase } = ctx;
+    
+    // Get data sorted by date
+    const { data: entries, error } = await supabase
+      .from('census_entries')
+      .select('*')
+      .in('department', input.departments)
+      .gte('date', input.startDate)
+      .lte('date', input.endDate)
+      .order('date', { ascending: true });
 
-      const { data: entries, error } = await supabase
-        .from('census_entries')
-        .select('*')
-        .in('department', input.departments)
-        .gte('date', input.startDate)
-        .lte('date', input.endDate);
-      
-      console.log('Raw Supabase response:', entries); // Debug log
+    if (error) {
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: error.message,
+      });
+    }
 
-      if (error) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: error.message,
-        });
+    // First, group by date and sum the patients for each date
+    const dailyTotals = entries.reduce((acc, entry) => {
+      const date = entry.date;
+      if (!acc[date]) {
+        acc[date] = {
+          date,
+          total_patients: 0,
+          entries: []
+        };
       }
-
-      // Group by date and sum current_patients
-      const dailyTotals = entries.reduce((acc, entry) => {
-        const date = entry.date;
-        if (!acc[date]) {
-          acc[date] = { date, current_patients: 0 };
-        }
-        acc[date].current_patients += entry.current_patients ?? 0;
-        return acc;
-      }, {} as Record<string, { date: string; current_patients: number }>);
-
-      console.log('Processed data:', Object.values(dailyTotals)); // Debug log
       
-      return Object.values(dailyTotals);
-    }),
+      // Add this entry's contribution to the total
+      acc[date].total_patients += entry.current_patients ?? 0;
+      acc[date].entries.push(entry);
+      
+      return acc;
+    }, {} as Record<string, { 
+      date: string; 
+      total_patients: number;
+      entries: typeof entries;
+    }>);
 
+    // Convert to array and calculate running total
+    let runningTotal = 0;
+    const result = Object.values(dailyTotals)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map(day => {
+        runningTotal += day.total_patients;
+        return {
+          date: day.date,
+          current_patients: Math.max(0, runningTotal) // Ensure non-negative
+        };
+      });
+
+    console.log('Daily totals:', dailyTotals);
+    console.log('Processed data:', result);
+    
+    return result;
+  }),
+  
   getDepartmentOccupancy: protectedProcedure
     .input(z.object({
       departments: z.array(z.string())

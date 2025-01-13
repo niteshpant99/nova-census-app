@@ -71,5 +71,5 @@ export interface ChartConfig {
 
 export interface ChartDataPoint {
   date: string;
-  value: number;
+  current_patients: number;
 }
