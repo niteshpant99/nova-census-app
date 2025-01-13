@@ -38,13 +38,15 @@ export function useDashboardData(dateRange: DateRange | undefined, selectedDepar
       : skipToken,
     {
       ...queryOptions,
-      // Transform the data to match ChartDataPoint type
-      select: (data) => data.map(item => ({
-        date: item.date,
-        value: item.current_patients,
-        // Include the original data for potential future use
-        metadata: { current_patients: item.current_patients }
-      }))
+      // Make sure we're returning the right data structure
+      select: (data) => {
+        if (!data) return [];
+        
+        return data.map(item => ({
+          date: item.date,
+          value: item.current_patients,
+        }));
+      }
     }
   );
 

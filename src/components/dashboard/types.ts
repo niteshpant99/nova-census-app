@@ -68,3 +68,8 @@ export interface ChartConfig {
   dataKey: keyof CensusEntry;
   color?: string;
 }
+
+export interface ChartDataPoint {
+  date: string;
+  value: number;
+}
