@@ -42,30 +42,33 @@ export const dashboardRouter = createTRPCRouter({
       return stats;
     }),
 
-    getHistoricalData: protectedProcedure
+  getHistoricalData: protectedProcedure
     .input(z.object({
-      startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      startDate: z.string(),
+      endDate: z.string(),
       departments: z.array(z.string())
     }))
     .query(async ({ ctx, input }): Promise<Array<{ date: string; current_patients: number }>> => {
       const { supabase } = ctx;
-  
+      
+      console.log('Input params:', input); // Debug log
+
       const { data: entries, error } = await supabase
         .from('census_entries')
         .select('*')
         .in('department', input.departments)
         .gte('date', input.startDate)
-        .lte('date', input.endDate)
-        .order('date', { ascending: true });
-  
+        .lte('date', input.endDate);
+      
+      console.log('Raw Supabase response:', entries); // Debug log
+
       if (error) {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: error.message,
         });
       }
-  
+
       // Group by date and sum current_patients
       const dailyTotals = entries.reduce((acc, entry) => {
         const date = entry.date;
@@ -75,7 +78,9 @@ export const dashboardRouter = createTRPCRouter({
         acc[date].current_patients += entry.current_patients ?? 0;
         return acc;
       }, {} as Record<string, { date: string; current_patients: number }>);
-  
+
+      console.log('Processed data:', Object.values(dailyTotals)); // Debug log
+      
       return Object.values(dailyTotals);
     }),
 
@@ -104,8 +109,8 @@ export const dashboardRouter = createTRPCRouter({
       return entries.map(entry => ({
         department: entry.department,
         current: entry.current_patients ?? 0,
-        total: 0, // This will be handled by the department service
-        percentage: 0 // This will be calculated after getting total beds
+        total: 0,           // This will be handled by the department service
+        percentage: 0       // This will be calculated after getting total beds
       }));
     }),
 
