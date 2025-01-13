@@ -93,7 +93,10 @@ export default function DashboardPage() {
             <Suspense fallback={<Skeleton className="h-[300px]" />}>
               <ErrorBoundary>
                 <HistoricalChart
-                  data={historical ?? []}
+                  data={(historical ?? []).map(point => ({
+                    ...point,
+                    current_patients: point.value
+                  }))}
                   isLoading={isLoading}
                 />
               </ErrorBoundary>
@@ -129,8 +132,11 @@ export default function DashboardPage() {
             <Card className="col-span-2">
               <Suspense fallback={<Skeleton className="h-[300px]" />}>
                 <ErrorBoundary>
-                  <TrendsChart
-                    data={historical ?? []}
+                <TrendsChart
+                    data={(historical ?? []).map(point => ({
+                      ...point,
+                      current_patients: point.value
+                    }))}
                     metrics={selectedMetrics}
                     isLoading={isLoading}
                   />

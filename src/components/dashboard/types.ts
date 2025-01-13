@@ -23,9 +23,10 @@ export interface Department {
 // Chart data types
 export interface ChartDataPoint {
   date: string;  // ISO date string format
-  value: number;
+  // value: number;
   metadata?: Record<string, unknown>;  // More strict than any
   department?: string;
+  current_patients: number;
 }
 
 export interface DepartmentOccupancy {
@@ -67,9 +68,4 @@ export interface ChartConfig {
   type: 'line' | 'bar' | 'area';
   dataKey: keyof CensusEntry;
   color?: string;
-}
-
-export interface ChartDataPoint {
-  date: string;
-  current_patients: number;
 }

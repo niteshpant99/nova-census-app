@@ -38,7 +38,7 @@ export function TrendsChart({ data, metrics, isLoading }: TrendsChartProps) {
               <Line
                 key={metric}
                 type="monotone"
-                dataKey={metric}
+                dataKey="current_patients"
                 stroke={colors[index % colors.length]}
                 name={metric}
               />
