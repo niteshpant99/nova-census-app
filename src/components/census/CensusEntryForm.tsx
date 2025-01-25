@@ -1,4 +1,3 @@
-// src/components/census/CensusEntryForm.tsx
 'use client';
 
 import { Form } from '@/components/ui/form';
@@ -9,7 +8,10 @@ import { TransfersOutSection } from './TransfersOutSection';
 import { NumberInput } from './NumberInput';
 import { ReviewScreen } from './ReviewScreen';
 import { DatePicker } from './DatePicker';
+import { DepartmentNavigation } from './DepartmentNavigation';
 import { useCensusForm } from '@/hooks/useCensusForm';
+import { useCensusNavigation } from '@/hooks/useCensusNavigation';
+import { toast } from '@/hooks/use-toast';
 
 interface CensusEntryFormProps {
   initialDepartment: string;
@@ -25,7 +27,28 @@ export function CensusEntryForm({ initialDepartment }: CensusEntryFormProps) {
     setIsReviewing,
     handleSubmit,
     onSubmit,
+    saveData,
   } = useCensusForm({ initialDepartment });
+
+  // Add navigation hook
+  const navigation = useCensusNavigation({ 
+    currentDepartment: initialDepartment,
+    onNavigate: async (nextDepartment) => {
+      // If form is dirty, save before navigating
+      if (form.formState.isDirty) {
+        const saved = await saveData(form.getValues());
+        if (!saved) {
+          toast({
+            title: "Warning",
+            description: "Failed to save changes. Please try again.",
+            variant: "destructive",
+          });
+          return false;
+        }
+      }
+      return true;
+    }
+  });
 
   if (isReviewing) {
     return (
@@ -39,64 +62,74 @@ export function CensusEntryForm({ initialDepartment }: CensusEntryFormProps) {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Date Selection */}
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full bg-background shadow-sm hover:bg-gray-50"
-          onClick={() => setShowCalendar(!showCalendar)}
-        >
-          {new Date(form.getValues("date")).toLocaleDateString()}
-        </Button>
+    <div className="relative pb-24"> {/* Add padding for fixed navigation */}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Date Selection */}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full bg-background shadow-sm hover:bg-gray-50"
+            onClick={() => setShowCalendar(!showCalendar)}
+          >
+            {new Date(form.getValues("date")).toLocaleDateString()}
+          </Button>
 
-        {showCalendar && (
-          <Card className="p-4">
-            <DatePicker 
-              form={form} 
-              department={initialDepartment}
-              onSelect={() => setShowCalendar(false)}
-            />
-          </Card>
-        )}
+          {showCalendar && (
+            <Card className="p-4">
+              <DatePicker 
+                form={form} 
+                department={initialDepartment}
+                onSelect={() => setShowCalendar(false)}
+              />
+            </Card>
+          )}
 
-        {/* Department Header */}
-        <div className="sticky top-0 bg-white/90 backdrop-blur-sm border-b pb-4">
-          <h2 className="text-lg font-medium">
-            {decodeURIComponent(initialDepartment)}
-          </h2>
-        </div>
+          {/* Department Header */}
+          <div className="sticky top-0 bg-white/90 backdrop-blur-sm border-b pb-4">
+            <h2 className="text-lg font-medium">
+              {decodeURIComponent(initialDepartment)}
+            </h2>
+          </div>
 
-        {/* Previous Patients */}
-        <NumberInput
-          form={form}
-          name="previous_patients"
-          label="Old patients"
-          className="bg-background"
-        />
+          {/* Previous Patients */}
+          <NumberInput
+            form={form}
+            name="previous_patients"
+            label="Old patients"
+            className="bg-background"
+          />
 
-        {/* Transfer Sections */}
-        <TransfersInSection form={form} />
-        <TransfersOutSection form={form} />
+          {/* Transfer Sections */}
+          <TransfersInSection form={form} />
+          <TransfersOutSection form={form} />
 
-        {/* OT Cases */}
-        <NumberInput
-          form={form}
-          name="ot_cases"
-          label="OT Cases"
-          className="bg-background"
-        />
+          {/* OT Cases */}
+          <NumberInput
+            form={form}
+            name="ot_cases"
+            label="OT Cases"
+            className="bg-background"
+          />
 
-        {/* Submit Button */}
-        <Button
-          type="submit"
-          className="w-full bg-gray-900 hover:bg-gray-800"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? "Submitting..." : "Continue"}
-        </Button>
-      </form>
-    </Form>
+          {/* Submit Button */}
+          <Button
+            type="submit"
+            className="w-full bg-gray-900 hover:bg-gray-800"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Submitting..." : "Continue"}
+          </Button>
+        </form>
+      </Form>
+
+      {/* Department Navigation */}
+      <DepartmentNavigation
+        navigation={navigation}
+        onNext={navigation.goToNext}
+        onPrevious={navigation.goToPrevious}
+        isLoading={isSubmitting}
+      />
+    </div>
   );
 }

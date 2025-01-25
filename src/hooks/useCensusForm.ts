@@ -1,5 +1,5 @@
 // src/hooks/useCensusForm.ts
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
@@ -12,20 +12,37 @@ import { useQueryClient } from '@tanstack/react-query';
 
 interface UseCensusFormOptions {
   initialDepartment: string;
+  onSaveSuccess?: () => void;
+  onSaveError?: (error: Error) => void;
 }
 
-export function useCensusForm({ initialDepartment }: UseCensusFormOptions) {
+export function useCensusForm({ 
+  initialDepartment,
+  onSaveSuccess,
+  onSaveError
+}: UseCensusFormOptions) {
   const [showCalendar, setShowCalendar] = useState(false);
   const [isReviewing, setIsReviewing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Get latest census data for this department
+  const { data: latestCensus } = api.census.getLatest.useQuery(
+    { department: initialDepartment },
+    { 
+      enabled: !!initialDepartment,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    }
+  );
 
   const form = useForm<CensusFormData>({
     resolver: zodResolver(censusEntrySchema),
     defaultValues: {
       date: format(new Date(), 'yyyy-MM-dd'),
       department: decodeURIComponent(initialDepartment),
-      previous_patients: 0,
+      // Use latest census data for previous_patients if available
+      previous_patients: latestCensus?.current_patients ?? 0,
       admissions: undefined,
       referrals_in: undefined,
       department_transfers_in: undefined,
@@ -45,25 +62,11 @@ export function useCensusForm({ initialDepartment }: UseCensusFormOptions) {
         title: "Success",
         description: response.message,
       });
-      form.reset();
+      form.reset(form.getValues()); // Reset form but keep values
       setIsReviewing(false);
+      onSaveSuccess?.();
       
-      // Wrap all query invalidations in a single async function
-      const invalidateQueries = async () => {
-        try {
-          await Promise.all([
-            queryClient.invalidateQueries({ queryKey: ['dashboard.getDashboardStats'] }),
-            queryClient.invalidateQueries({ queryKey: ['dashboard.getHistoricalData'] }),
-            queryClient.invalidateQueries({ queryKey: ['dashboard.getDepartmentOccupancy'] }),
-            queryClient.invalidateQueries({ queryKey: ['dashboard.getDischargeAnalytics'] }),
-            queryClient.invalidateQueries({ queryKey: ['census.getByDate'] })
-          ]);
-        } catch (error) {
-          console.error('Error invalidating queries:', error);
-        }
-      };
-
-      // Execute the async function
+      // Invalidate queries
       void invalidateQueries();
     },
     onError: (err: TRPCClientErrorLike<AppRouter>) => {
@@ -73,10 +76,56 @@ export function useCensusForm({ initialDepartment }: UseCensusFormOptions) {
         variant: "destructive",
       });
       setIsReviewing(false);
+      onSaveError?.(new Error(err.message));
     },
   });
 
   const generateMessageMutation = api.census.generateMessage.useMutation();
+
+  // Invalidate all relevant queries
+  const invalidateQueries = useCallback(async () => {
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['dashboard.getDashboardStats'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard.getHistoricalData'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard.getDepartmentOccupancy'] }),
+        queryClient.invalidateQueries({ queryKey: ['dashboard.getDischargeAnalytics'] }),
+        queryClient.invalidateQueries({ queryKey: ['census.getByDate'] }),
+        queryClient.invalidateQueries({ queryKey: ['census.getLatest'] })
+      ]);
+    } catch (error) {
+      console.error('Error invalidating queries:', error);
+    }
+  }, [queryClient]);
+
+  // Autosave functionality
+  const saveData = useCallback(async (data: CensusFormData): Promise<boolean> => {
+    try {
+      setIsSaving(true);
+      
+      const processedData = {
+        ...data,
+        admissions: data.admissions ?? 0,
+        referrals_in: data.referrals_in ?? 0,
+        department_transfers_in: data.department_transfers_in ?? 0,
+        recovered: data.recovered ?? 0,
+        lama: data.lama ?? 0,
+        absconded: data.absconded ?? 0,
+        referred_out: data.referred_out ?? 0,
+        not_improved: data.not_improved ?? 0,
+        deaths: data.deaths ?? 0,
+        ot_cases: data.ot_cases ?? 0
+      };
+
+      await submitMutation.mutateAsync(processedData);
+      return true;
+    } catch (error) {
+      console.error('Autosave failed:', error);
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [submitMutation]);
 
   const handleSubmit = async (data: CensusFormData) => {
     try {
@@ -126,9 +175,11 @@ export function useCensusForm({ initialDepartment }: UseCensusFormOptions) {
     showCalendar,
     isReviewing,
     isSubmitting: submitMutation.isPending || generateMessageMutation.isPending,
+    isSaving,
     setShowCalendar,
     setIsReviewing,
     handleSubmit,
     onSubmit,
+    saveData, // Expose saveData for autosave functionality
   };
 }
