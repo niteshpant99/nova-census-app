@@ -32,6 +32,7 @@ export function useCensusForm({
     { department: initialDepartment },
     { 
       enabled: !!initialDepartment,
+      cacheTime: 1000 * 60 * 5, // 5 minutes
       staleTime: 1000 * 60 * 5, // 5 minutes
     }
   );

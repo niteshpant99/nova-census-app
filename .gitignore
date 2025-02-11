@@ -19,6 +19,7 @@ generate-snapshot.sh
 codebase_snapshot.txt
 codebase-extractor.sh
 codebase_content.txt
+codebase_content.json
 
 # database
 /prisma/db.sqlite
