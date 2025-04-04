@@ -31,7 +31,16 @@ export function CensusEntryForm({ initialDepartment }: CensusEntryFormProps) {
   } = useCensusForm({ initialDepartment });
 
   // Add navigation hook
-  const navigation = useCensusNavigation({ 
+  const {
+    currentIndex,
+    totalDepartments,
+    hasNext,
+    hasPrevious, 
+    nextDepartment,
+    previousDepartment,
+    goToNext,
+    goToPrevious
+  } = useCensusNavigation({ 
     currentDepartment: initialDepartment,
     onNavigate: async (nextDepartment) => {
       // If form is dirty, save before navigating
@@ -125,9 +134,14 @@ export function CensusEntryForm({ initialDepartment }: CensusEntryFormProps) {
 
       {/* Department Navigation */}
       <DepartmentNavigation
-        navigation={navigation}
-        onNext={navigation.goToNext}
-        onPrevious={navigation.goToPrevious}
+        currentIndex={currentIndex}
+        totalDepartments={totalDepartments}
+        hasNext={hasNext}
+        hasPrevious={hasPrevious}
+        nextDepartment={nextDepartment}
+        previousDepartment={previousDepartment}
+        onNext={goToNext}
+        onPrevious={goToPrevious}
         isLoading={isSubmitting}
       />
     </div>

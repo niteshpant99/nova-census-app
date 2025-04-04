@@ -12,15 +12,14 @@ import {
   TrendsChart, 
   DateRangeSelector, 
   DepartmentFilter, 
-  MetricToggle, 
-  DEPARTMENTS, 
-  getAllDepartments 
+  MetricToggle
 } from '@/components/dashboard';
-import { useDashboardData } from '@/lib/hooks/useDashboardData';
 import { DASHBOARD_METRICS } from '@/components/dashboard/Controls/MetricToggle';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ErrorBoundary } from '@/components/error-boundary/FormErrorBoundary';
+import { ErrorBoundary } from '@/components/error-boundary';
 import { subDays } from 'date-fns';
+import { useDashboardData } from '@/hooks/useDashboardData';
+import { getAllDepartments, DEPARTMENTS } from '@/lib/config/departments';
 
 export default function DashboardPage() {
   // Calculate default date range
@@ -29,20 +28,18 @@ export default function DashboardPage() {
     to: new Date() // Today
   };
 
-  
   // Initialize state with default range
   const [dateRange, setDateRange] = useState<DateRange | undefined>(defaultDateRange);
 
-  // State management (default)
-  // const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: new Date(), to: new Date() });
+  // Get all departments and set as default selected departments
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>(
-    getAllDepartments().map(d => d.id)
+    getAllDepartments().map((d) => d.id)
   );
-  const [selectedMetrics, setSelectedMetrics] = useState<string[]>(
-    DASHBOARD_METRICS.slice(0, 3).map(m => m.id) // Default to first 3 metrics
-  );
-
   
+  // Default to first 3 metrics
+  const [selectedMetrics, setSelectedMetrics] = useState<string[]>(
+    DASHBOARD_METRICS.slice(0, 3).map(m => m.id)
+  );
 
   // Fetch dashboard data using our custom hook
   const { stats, occupancy, historical, discharges, isLoading } = useDashboardData(dateRange, selectedDepartments);
@@ -93,10 +90,7 @@ export default function DashboardPage() {
             <Suspense fallback={<Skeleton className="h-[300px]" />}>
               <ErrorBoundary>
                 <HistoricalChart
-                  data={(historical ?? []).map(point => ({
-                    ...point,
-                    current_patients: point.value
-                  }))}
+                  data={historical}
                   isLoading={isLoading}
                 />
               </ErrorBoundary>
@@ -133,10 +127,7 @@ export default function DashboardPage() {
               <Suspense fallback={<Skeleton className="h-[300px]" />}>
                 <ErrorBoundary>
                 <TrendsChart
-                    data={(historical ?? []).map(point => ({
-                      ...point,
-                      current_patients: point.value
-                    }))}
+                    data={historical}
                     metrics={selectedMetrics}
                     isLoading={isLoading}
                   />

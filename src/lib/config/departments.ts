@@ -1,19 +1,11 @@
-// src/compoents/dashboard/config/department.ts
+// src/lib/config/departments.ts
 
-import type { Department } from '@/components/dashboard/types';
+import type { Department } from '@/types/department';
 
-// TODO: In future versions, consolidate department types and handling
-{/*
-  Post op:10
-Cabin:3
-General ward:18
-ICU:5
-Pediatric ward:9
-NICU:8
-Maternal ward:7
-There are altogether 60 beds including cabin.
-*/}
-
+/**
+ * Department configuration for Nova Hospital
+ * This is the single source of truth for department data in the application
+ */
 export const DEPARTMENTS: Department[] = [
   {
     id: 'general',
@@ -50,12 +42,14 @@ export const DEPARTMENTS: Department[] = [
   },
   {
     id: 'maternal',
-    name: 'Material Ward',
+    name: 'Maternal Ward', // Fixed typo from "Material Ward"
     totalBeds: 7,
   }
 ];
 
-// Helper functions
+/**
+ * Retrieve a department by its ID
+ */
 export const getDepartmentById = (id: string): Department | undefined => {
   for (const dept of DEPARTMENTS) {
     if (dept.id === id) return dept;
@@ -67,6 +61,9 @@ export const getDepartmentById = (id: string): Department | undefined => {
   return undefined;
 };
 
+/**
+ * Calculate the total number of beds in the hospital
+ */
 export const getTotalHospitalBeds = (): number => {
   return DEPARTMENTS.reduce((total, dept) => {
     const mainBeds = dept.totalBeds;
@@ -75,13 +72,18 @@ export const getTotalHospitalBeds = (): number => {
   }, 0);
 };
 
+/**
+ * Check if a department ID is valid
+ */
 export const isValidDepartment = (id: string): boolean => {
   return DEPARTMENTS.some(dept => 
     dept.id === id || dept.subUnits?.some(unit => unit.id === id)
   );
 };
 
-// Get flattened list of all departments including sub-units
+/**
+ * Get a flattened list of all departments including sub-units
+ */
 export const getAllDepartments = (): Department[] => {
   return DEPARTMENTS.reduce<Department[]>((all, dept) => {
     all.push(dept);
@@ -90,4 +92,26 @@ export const getAllDepartments = (): Department[] => {
     }
     return all;
   }, []);
+};
+
+/**
+ * Get a list of all department IDs
+ */
+export const getAllDepartmentIds = (): string[] => {
+  return getAllDepartments().map(dept => dept.id);
+};
+
+/**
+ * Get a list of all parent departments (excluding sub-units)
+ */
+export const getParentDepartments = (): Department[] => {
+  return DEPARTMENTS.filter(dept => !dept.parentId);
+};
+
+/**
+ * Get child departments for a given parent department ID
+ */
+export const getChildDepartments = (parentId: string): Department[] => {
+  const parent = getDepartmentById(parentId);
+  return parent?.subUnits ?? [];
 };

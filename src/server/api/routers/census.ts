@@ -1,18 +1,27 @@
 // src/server/api/routers/census.ts
 import { z } from "zod";
-import { format } from "date-fns"; // Add this import to help with date formatting
+import { format } from "date-fns";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { censusFormSchema } from "@/components/census/types";
 import { TRPCError } from "@trpc/server";
-import type { CensusEntry } from '@/lib/schemas/census';
-import type { CensusResponse, WhatsAppMessageResponse } from './types';
+import { censusEntrySchema, type CensusEntry, calculateTotals } from '@/lib/schemas/census';
 import type { Database } from '@/types/database';
+
+// Response types
+interface CensusResponse {
+  success: boolean;
+  data: CensusEntry;
+  message: string;
+}
+
+interface WhatsAppMessageResponse {
+  message: string;
+}
 
 type CensusEntryInsert = Database['public']['Tables']['census_entries']['Insert'];
 
 export const censusRouter = createTRPCRouter({
   submit: protectedProcedure
-    .input(censusFormSchema)
+    .input(censusEntrySchema)
     .mutation(async ({ ctx, input }) => {
       try {
         const { supabase, user } = ctx;
@@ -24,41 +33,34 @@ export const censusRouter = createTRPCRouter({
           });
         }
 
-        // Calculate total patients
-        const totalPatients = 
-          input.previous_patients +
-          (input.admissions ?? 0) +
-          (input.referrals_in ?? 0) +
-          (input.department_transfers_in ?? 0) -
-          ((input.recovered ?? 0) +
-           (input.lama ?? 0) +
-           (input.absconded ?? 0) +
-           (input.referred_out ?? 0) +
-           (input.not_improved ?? 0) +
-           (input.deaths ?? 0));
+        // Use the shared calculation utility
+        const { total_transfers_in, total_transfers_out, current_patients } = calculateTotals(input);
 
         const insertData: CensusEntryInsert = {
           department: input.department,
-          date: format(input.date, 'yyyy-MM-dd'),
+          date: format(new Date(input.date), 'yyyy-MM-dd'),
           previous_patients: input.previous_patients,
-          admissions: input.admissions ?? 0,
-          referrals_in: input.referrals_in ?? 0,
-          department_transfers_in: input.department_transfers_in ?? 0,
-          recovered: input.recovered ?? 0,
-          lama: input.lama ?? 0,
-          absconded: input.absconded ?? 0,
-          referred_out: input.referred_out ?? 0,
-          not_improved: input.not_improved ?? 0,
-          deaths: input.deaths ?? 0,
-          ot_cases: input.ot_cases ?? 0,
-          current_patients: totalPatients,
+          admissions: input.admissions,
+          referrals_in: input.referrals_in,
+          department_transfers_in: input.department_transfers_in,
+          recovered: input.recovered,
+          lama: input.lama,
+          absconded: input.absconded,
+          referred_out: input.referred_out,
+          not_improved: input.not_improved,
+          deaths: input.deaths,
+          ot_cases: input.ot_cases,
+          current_patients,
           created_by: user.id
         };
 
         // Insert census entry
         const { data, error } = await supabase
           .from('census_entries')
-          .insert(insertData)
+          .upsert(insertData, { 
+            onConflict: 'department,date', 
+            ignoreDuplicates: false 
+          })
           .select()
           .single();
 
@@ -96,7 +98,7 @@ export const censusRouter = createTRPCRouter({
       } catch (error) {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to submit census entry',
+          message: error instanceof Error ? error.message : 'Failed to submit census entry',
           cause: error
         });
       }
@@ -107,61 +109,76 @@ export const censusRouter = createTRPCRouter({
       department: z.string()
     }))
     .query(async ({ ctx, input }) => {
-      const { supabase } = ctx;
-      
-      const { data, error } = await supabase
-        .from('census_entries')
-        .select('*')
-        .eq('department', input.department)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+      try {
+        const { supabase } = ctx;
+        
+        const { data, error } = await supabase
+          .from('census_entries')
+          .select('*')
+          .eq('department', input.department)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
 
-      if (error) throw error;
+        if (error) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: error.message,
+          });
+        }
 
-      return data as CensusEntry;
+        return data as CensusEntry;
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: error instanceof Error ? error.message : 'Failed to fetch latest census entry',
+          cause: error
+        });
+      }
     }),
 
   getByDate: protectedProcedure
     .input(z.object({
-      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // Updated to expect string date
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
       department: z.string()
     }))
     .query(async ({ ctx, input }) => {
-      const { supabase } = ctx;
+      try {
+        const { supabase } = ctx;
 
-      const { data, error } = await supabase
-        .from('census_entries')
-        .select('*')
-        .eq('date', input.date)
-        .eq('department', input.department)
-        .single();
+        const { data, error } = await supabase
+          .from('census_entries')
+          .select('*')
+          .eq('date', input.date)
+          .eq('department', input.department)
+          .single();
 
-      if (error) throw error;
-      
-      return data as CensusEntry;
+        if (error) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: error.message,
+          });
+        }
+        
+        return data as CensusEntry;
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: error instanceof Error ? error.message : 'Failed to fetch census entry by date',
+          cause: error
+        });
+      }
     }),
 
   generateMessage: protectedProcedure
-    .input(censusFormSchema)
+    .input(censusEntrySchema)
     .mutation(({ input }) => {   
-      const totalIn = 
-        (input.admissions ?? 0) + 
-        (input.referrals_in ?? 0) + 
-        (input.department_transfers_in ?? 0);
-
-      const totalOut = 
-        (input.recovered ?? 0) +
-        (input.lama ?? 0) +
-        (input.absconded ?? 0) +
-        (input.referred_out ?? 0) +
-        (input.not_improved ?? 0) +
-        (input.deaths ?? 0);
-
-      const currentPatients = 
-        input.previous_patients + 
-        totalIn - 
-        totalOut;
+      // Use shared utility to calculate totals
+      const { total_transfers_in, total_transfers_out, current_patients } = calculateTotals(input);
       
       const displayDate = new Date(input.date).toLocaleDateString();
 
@@ -171,22 +188,22 @@ Date: ${displayDate}
 Previous Patients: ${input.previous_patients}
 
 *Transfers In*
-- Admissions: ${input.admissions ?? 0}
-- Referrals: ${input.referrals_in ?? 0}
-- Department Transfers: ${input.department_transfers_in ?? 0}
-Total In: ${totalIn}
+- Admissions: ${input.admissions}
+- Referrals: ${input.referrals_in}
+- Department Transfers: ${input.department_transfers_in}
+Total In: ${total_transfers_in}
 
 *Transfers Out*
-- Recovered: ${input.recovered ?? 0}
-- LAMA: ${input.lama ?? 0}
-- Absconded: ${input.absconded ?? 0}
-- Referred Out: ${input.referred_out ?? 0}
-- Not Improved: ${input.not_improved ?? 0}
-- Deaths: ${input.deaths ?? 0}
-Total Out: ${totalOut}
+- Recovered: ${input.recovered}
+- LAMA: ${input.lama}
+- Absconded: ${input.absconded}
+- Referred Out: ${input.referred_out}
+- Not Improved: ${input.not_improved}
+- Deaths: ${input.deaths}
+Total Out: ${total_transfers_out}
 
-Current Patients: ${currentPatients}
-OT Cases: ${input.ot_cases ?? 0}`;
+Current Patients: ${current_patients}
+OT Cases: ${input.ot_cases}`;
 
       return { message } as WhatsAppMessageResponse;
     })

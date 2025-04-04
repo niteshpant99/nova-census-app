@@ -58,3 +58,10 @@ yarn-error.log*
 # idea files
 .idea
 .aider*
+
+repomix-output.txt
+
+CLAUDE.md
+PRD.md
+REFACTORING_PLAN.md
+REFACTORING_SUMMARY.md

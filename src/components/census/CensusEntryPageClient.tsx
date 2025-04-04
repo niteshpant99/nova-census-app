@@ -3,7 +3,7 @@
 
 import { AppHeader } from '@/components/layout/AppHeader';
 import { CensusEntryForm } from '@/components/census/CensusEntryForm';
-import { ErrorBoundary } from '@/components/error-boundary/FormErrorBoundary';
+import { FormErrorBoundary } from '@/components/error-boundary';
 import { Suspense } from 'react';
 
 export function CensusEntryPageClient({
@@ -19,9 +19,9 @@ export function CensusEntryPageClient({
       <AppHeader />
       <main className="container max-w-md mx-auto p-4">
         <Suspense fallback={<div>Loading...</div>}>
-          <ErrorBoundary>
+          <FormErrorBoundary>
             <CensusEntryForm initialDepartment={decodedDepartment} />
-          </ErrorBoundary>
+          </FormErrorBoundary>
         </Suspense>
       </main>
     </div>

@@ -1,29 +1,85 @@
-# Create T3 App
+# Nova Census Dashboard
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+A mobile-optimized web application designed to digitize the daily census reporting process at Nova Hospital in Nepal. This app allows nurses to input census data efficiently, automatically generates WhatsApp-compatible messages, and provides administrators with insightful analytics through an interactive dashboard.
 
-## What's next? How do I make an app with this?
+## Getting Started
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+### Prerequisites
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+- Node.js 18.0 or higher
+- pnpm package manager
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+### Installation
 
-## Learn More
+```bash
+# Install dependencies
+pnpm install
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+# Start development server
+pnpm dev
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+# Build for production
+pnpm build
+```
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+## Key Features
 
-## How do I deploy this?
+- Mobile-optimized data entry form
+- Sequential department navigation
+- Auto-save functionality
+- WhatsApp message generation
+- Interactive analytics dashboard
+- Role-based access control
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+## Tech Stack
+
+- **Frontend**: 
+  - Next.js 15 (App Router)
+  - TypeScript
+  - Tailwind CSS
+  - shadcn/ui components
+  - Tremor for charts
+  - tRPC for API calls
+
+- **Backend/Database**: 
+  - Supabase (PostgreSQL)
+  - Row-level security
+  - Authentication
+
+## Project Structure
+
+- `src/app` - Next.js app router pages
+- `src/components` - UI components organized by feature
+- `src/hooks` - Custom React hooks
+- `src/lib` - Utilities, schemas, and services
+- `src/server` - tRPC routers and API endpoints
+- `src/types` - TypeScript type definitions
+
+## Development Commands
+
+```bash
+# Format code
+pnpm format:write
+
+# Check types
+pnpm typecheck
+
+# Lint code
+pnpm lint
+
+# Run both lint and typecheck
+pnpm check
+
+# Run in preview mode
+pnpm preview
+```
+
+## Deployment
+
+The application is deployed on Vercel, with database hosted on Supabase.
+
+## Documentation
+
+For detailed documentation about the project requirements and specifications, see [PRD.md](./PRD.md).
+
+For refactoring and code improvement plans, see [REFACTORING_PLAN.md](./REFACTORING_PLAN.md).

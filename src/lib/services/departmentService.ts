@@ -1,75 +1,94 @@
 // src/lib/services/departmentService.ts
-import { DEPARTMENTS } from '@/components/dashboard/config/departments';
-import type { Department } from '@/components/dashboard/types';
 
+import { 
+  DEPARTMENTS, 
+  getAllDepartments, 
+  getDepartmentById 
+} from '@/lib/config/departments';
+import type { Department, DepartmentOccupancy } from '@/types/department';
+
+/**
+ * Service for department-related operations
+ * 
+ * This provides a central interface for accessing department data,
+ * calculating metrics, and organizing departments into navigation sequences.
+ */
 class DepartmentService {
-  private departments: Department[] = DEPARTMENTS;
-  private _allDepartments: Department[] | null = null;
-
-  // Get all departments including sub-units
-  getAllDepartments(): Department[] {
-    if (this._allDepartments) return this._allDepartments;
-    this._allDepartments = this.departments.reduce<Department[]>((all, dept) => {
-      all.push(dept);
-      if (dept.subUnits) {
-        all.push(...dept.subUnits);
-      }
-      return all;
-    }, []);
-    return this._allDepartments;
+  /**
+   * Get all departments, ordered for navigation
+   */
+  getOrderedDepartments(): Department[] {
+    return getAllDepartments();
   }
 
-  // Get department by ID
-  getDepartment(id: string): Department | undefined {
-    for (const dept of this.departments) {
-      if (dept.id === id) return dept;
-      if (dept.subUnits) {
-        const subUnit = dept.subUnits.find(unit => unit.id === id);
-        if (subUnit) return subUnit;
-      }
-    }
-    return undefined;
+  /**
+   * Get department by ID
+   */
+  getDepartmentById(id: string): Department | undefined {
+    return getDepartmentById(id);
   }
 
-  // Get total beds for a department (including sub-units)
-  getDepartmentTotalBeds(id: string): number {
-    const dept = this.getDepartment(id);
-    if (!dept) return 0;
+  /**
+   * Get total number of beds in a department
+   */
+  getDepartmentBedCount(id: string): number {
+    const dept = this.getDepartmentById(id);
+    return dept?.totalBeds ?? 0;
+  }
 
-    const mainBeds = dept.totalBeds;
-    const subUnitBeds = dept.subUnits?.reduce((sum, unit) => sum + unit.totalBeds, 0) ?? 0;
+  /**
+   * Calculate occupancy percentage for a department
+   */
+  calculateOccupancy(departmentId: string, currentPatients: number): number {
+    const bedCount = this.getDepartmentBedCount(departmentId);
     
-    return mainBeds + subUnitBeds;
+    if (bedCount === 0) return 0;
+    
+    return Math.round((currentPatients / bedCount) * 100);
   }
 
-  // Get total hospital beds
-  getTotalHospitalBeds(): number {
-    return this.departments.reduce((total, dept) => {
-      const mainBeds = dept.totalBeds;
-      const subUnitBeds = dept.subUnits?.reduce((sum, unit) => sum + unit.totalBeds, 0) ?? 0;
-      return total + mainBeds + subUnitBeds;
-    }, 0);
+  /**
+   * Get department name by ID
+   */
+  getDepartmentName(id: string): string {
+    const dept = this.getDepartmentById(id);
+    return dept?.name ?? id;
   }
 
-  // Calculate occupancy rate for a department
-  calculateDepartmentOccupancy(id: string, currentPatients: number): number {
-    const totalBeds = this.getDepartmentTotalBeds(id);
-    if (totalBeds === 0) return 0;
-    return (currentPatients / totalBeds) * 100;
-  }
-
-  // Get parent department if exists
+  /**
+   * Get parent department for a department
+   */
   getParentDepartment(id: string): Department | undefined {
-    return this.departments.find(dept => 
-      dept.subUnits?.some(unit => unit.id === id)
-    );
+    const dept = this.getDepartmentById(id);
+    
+    if (!dept?.parentId) return undefined;
+    
+    return this.getDepartmentById(dept.parentId);
   }
 
-  // Check if department exists
-  isDepartmentValid(id: string): boolean {
-    return !!this.getDepartment(id);
+  /**
+   * Check if a department has sub-units
+   */
+  hasSubUnits(id: string): boolean {
+    const dept = this.getDepartmentById(id);
+    return !!dept?.subUnits && dept.subUnits.length > 0;
+  }
+
+  /**
+   * Get all parent departments (top-level departments)
+   */
+  getParentDepartments(): Department[] {
+    return DEPARTMENTS;
+  }
+
+  /**
+   * Get child departments for a given parent department
+   */
+  getChildDepartments(parentId: string): Department[] {
+    const dept = this.getDepartmentById(parentId);
+    return dept?.subUnits ?? [];
   }
 }
 
-// Export singleton instance
+// Export as a singleton
 export const departmentService = new DepartmentService();

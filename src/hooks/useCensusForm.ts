@@ -27,13 +27,17 @@ export function useCensusForm({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Query key for caching
+  const latestCensusKey = ['census.getLatest', { department: initialDepartment }];
+
   // Get latest census data for this department
-  const { data: latestCensus } = api.census.getLatest.useQuery(
+  const { data: latestCensus, isLoading: isLoadingLatest } = api.census.getLatest.useQuery(
     { department: initialDepartment },
     { 
       enabled: !!initialDepartment,
-      cacheTime: 1000 * 60 * 5, // 5 minutes
       staleTime: 1000 * 60 * 5, // 5 minutes
+      refetchOnWindowFocus: false,
+      refetchOnMount: true,
     }
   );
 
@@ -44,18 +48,41 @@ export function useCensusForm({
       department: decodeURIComponent(initialDepartment),
       // Use latest census data for previous_patients if available
       previous_patients: latestCensus?.current_patients ?? 0,
-      admissions: undefined,
-      referrals_in: undefined,
-      department_transfers_in: undefined,
-      recovered: undefined,
-      lama: undefined,
-      absconded: undefined,
-      referred_out: undefined,
-      not_improved: undefined,
-      deaths: undefined,
-      ot_cases: undefined
+      admissions: 0,
+      referrals_in: 0,
+      department_transfers_in: 0,
+      recovered: 0,
+      lama: 0,
+      absconded: 0,
+      referred_out: 0,
+      not_improved: 0,
+      deaths: 0,
+      ot_cases: 0
+    },
+    // Don't initialize form values while loading to prevent flash of zero values
+    values: isLoadingLatest ? undefined : {
+      date: format(new Date(), 'yyyy-MM-dd'),
+      department: decodeURIComponent(initialDepartment),
+      previous_patients: latestCensus?.current_patients ?? 0,
+      admissions: 0,
+      referrals_in: 0,
+      department_transfers_in: 0,
+      recovered: 0,
+      lama: 0,
+      absconded: 0,
+      referred_out: 0,
+      not_improved: 0,
+      deaths: 0,
+      ot_cases: 0
     }
   });
+
+  // Set values once latestCensus is loaded
+  useCallback(() => {
+    if (latestCensus && !isLoadingLatest) {
+      form.setValue('previous_patients', latestCensus.current_patients ?? 0);
+    }
+  }, [latestCensus, isLoadingLatest, form]);
 
   const submitMutation = api.census.submit.useMutation({
     onSuccess: (response) => {
@@ -87,12 +114,8 @@ export function useCensusForm({
   const invalidateQueries = useCallback(async () => {
     try {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['dashboard.getDashboardStats'] }),
-        queryClient.invalidateQueries({ queryKey: ['dashboard.getHistoricalData'] }),
-        queryClient.invalidateQueries({ queryKey: ['dashboard.getDepartmentOccupancy'] }),
-        queryClient.invalidateQueries({ queryKey: ['dashboard.getDischargeAnalytics'] }),
-        queryClient.invalidateQueries({ queryKey: ['census.getByDate'] }),
-        queryClient.invalidateQueries({ queryKey: ['census.getLatest'] })
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] }), // Invalidate all dashboard queries
+        queryClient.invalidateQueries({ queryKey: ['census'] })    // Invalidate all census queries
       ]);
     } catch (error) {
       console.error('Error invalidating queries:', error);
@@ -103,22 +126,7 @@ export function useCensusForm({
   const saveData = useCallback(async (data: CensusFormData): Promise<boolean> => {
     try {
       setIsSaving(true);
-      
-      const processedData = {
-        ...data,
-        admissions: data.admissions ?? 0,
-        referrals_in: data.referrals_in ?? 0,
-        department_transfers_in: data.department_transfers_in ?? 0,
-        recovered: data.recovered ?? 0,
-        lama: data.lama ?? 0,
-        absconded: data.absconded ?? 0,
-        referred_out: data.referred_out ?? 0,
-        not_improved: data.not_improved ?? 0,
-        deaths: data.deaths ?? 0,
-        ot_cases: data.ot_cases ?? 0
-      };
-
-      await submitMutation.mutateAsync(processedData);
+      await submitMutation.mutateAsync(data);
       return true;
     } catch (error) {
       console.error('Autosave failed:', error);
@@ -130,21 +138,8 @@ export function useCensusForm({
 
   const handleSubmit = async (data: CensusFormData) => {
     try {
-      const processedData = {
-        ...data,
-        admissions: data.admissions ?? 0,
-        referrals_in: data.referrals_in ?? 0,
-        department_transfers_in: data.department_transfers_in ?? 0,
-        recovered: data.recovered ?? 0,
-        lama: data.lama ?? 0,
-        absconded: data.absconded ?? 0,
-        referred_out: data.referred_out ?? 0,
-        not_improved: data.not_improved ?? 0,
-        deaths: data.deaths ?? 0,
-        ot_cases: data.ot_cases ?? 0
-      };
-
-      const messageResponse = await generateMessageMutation.mutateAsync(processedData);
+      // Generate WhatsApp message
+      const messageResponse = await generateMessageMutation.mutateAsync(data);
       await navigator.clipboard.writeText(messageResponse.message);
       
       toast({
@@ -152,7 +147,8 @@ export function useCensusForm({
         description: "WhatsApp message copied to clipboard",
       });
       
-      await submitMutation.mutateAsync(processedData);
+      // Submit the data
+      await submitMutation.mutateAsync(data);
     } catch (error) {
       console.error('Form submission failed:', error);
       toast({
@@ -177,6 +173,7 @@ export function useCensusForm({
     isReviewing,
     isSubmitting: submitMutation.isPending || generateMessageMutation.isPending,
     isSaving,
+    isLoading: isLoadingLatest,
     setShowCalendar,
     setIsReviewing,
     handleSubmit,

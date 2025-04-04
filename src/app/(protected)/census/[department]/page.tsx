@@ -1,19 +1,18 @@
 // src/app/(protected)/census/[department]/page.tsx
 import { CensusEntryPageClient } from '@/components/census/CensusEntryPageClient'
 import { notFound } from 'next/navigation'
-import { isValidDepartment } from '@/components/dashboard/config/departments'
+import { isValidDepartment } from '@/lib/config/departments'
 
-type PageParams = Promise<{
+interface PageParams {
   department: string
-}>
+}
 
 export default async function CensusEntryPage({
   params,
 }: {
   params: PageParams
 }) {
-  const resolvedParams = await params
-  const department = resolvedParams.department
+  const department = params.department
 
   // Validate the department parameter
   if (!isValidDepartment(department)) {
@@ -33,9 +32,8 @@ export async function generateMetadata({
 }: {
   params: PageParams
 }) {
-  const resolvedParams = await params
   return {
-    title: `Census Entry - ${resolvedParams.department}`,
-    description: `Enter census data for ${resolvedParams.department}`,
+    title: `Census Entry - ${params.department}`,
+    description: `Enter census data for ${params.department}`,
   }
 }

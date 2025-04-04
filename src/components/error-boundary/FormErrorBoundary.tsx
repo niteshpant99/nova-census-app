@@ -1,66 +1,55 @@
-// src/components/error-boundary/ErrorBoundary.tsx
-import { Component, type ReactNode } from 'react';
-import { Card } from '@/components/ui/card';
+// src/components/error-boundary/FormErrorBoundary.tsx
+'use client';
+
+import React, { ReactNode } from 'react';
+import { ErrorBoundary } from './ErrorBoundary';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { AlertCircle } from 'lucide-react';
 
-interface Props {
+interface FormErrorBoundaryProps {
   children: ReactNode;
+  onReset?: () => void;
 }
 
-interface State {
-  hasError: boolean;
-  error?: Error;
-}
-
-export class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false
-  };
-
-  public static getDerivedStateFromError(error: Error): State {
-    return { 
-      hasError: true,
-      error 
-    };
-  }
-
-  public componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
-  }
-
-  private handleReset = () => {
-    this.setState({ 
-      hasError: false,
-      error: undefined 
-    });
-  };
-
-  public render() {
-    if (this.state.hasError) {
-      return (
-        <Card className="p-6">
-          <div className="space-y-4">
-            <h2 className="text-lg font-medium">Something went wrong</h2>
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <div className="text-sm text-red-600 bg-red-50 p-4 rounded-md">
-                <p className="font-medium">Error details:</p>
-                <p className="font-mono">{this.state.error.message}</p>
-              </div>
-            )}
-            <p className="text-muted-foreground">
-              There was an error loading this section. Please try again.
-            </p>
-            <Button
-              onClick={this.handleReset}
-              className="w-full"
-            >
-              Try again
-            </Button>
-          </div>
-        </Card>
-      );
+/**
+ * Form-specific error boundary with retry functionality
+ * 
+ * Designed specifically for form components, with a tailored error message
+ * and additional form reset capabilities.
+ */
+export function FormErrorBoundary({ children, onReset }: FormErrorBoundaryProps) {
+  const handleReset = () => {
+    // Call parent reset handler if provided
+    if (onReset) {
+      onReset();
     }
+  };
 
-    return this.props.children;
-  }
+  // Custom fallback UI for form errors
+  const fallback = (
+    <Card className="p-6 max-w-md mx-auto my-4">
+      <div className="flex flex-col items-center text-center">
+        <AlertCircle className="h-10 w-10 text-destructive mb-4" />
+        <h2 className="text-xl font-bold mb-2">Form Error</h2>
+        <p className="text-muted-foreground mb-6">
+          There was a problem with this form. Please try again or contact support if the issue persists.
+        </p>
+        <div className="flex gap-4">
+          <Button onClick={handleReset} variant="outline">
+            Reset Form
+          </Button>
+          <Button onClick={() => window.location.reload()}>
+            Reload Page
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+
+  return (
+    <ErrorBoundary fallback={fallback} onError={console.error}>
+      {children}
+    </ErrorBoundary>
+  );
 }

@@ -1,3 +1,5 @@
+// src/components/dashboard/index.ts
+
 // Controls
 export { DateRangeSelector } from './Controls/DateRangeSelector';
 export { DepartmentFilter } from './Controls/DepartmentFilter';
@@ -16,5 +18,11 @@ export { StatsGrid } from './QuickStats/StatsGrid';
 // Types
 export type * from './types';
 
-// Configuration
-export { DEPARTMENTS, getDepartmentById, getTotalHospitalBeds, isValidDepartment, getAllDepartments } from './config/departments';
+// Configuration - now use centralized department config
+export { 
+  DEPARTMENTS, 
+  getDepartmentById, 
+  getTotalHospitalBeds, 
+  isValidDepartment, 
+  getAllDepartments 
+} from '@/lib/config/departments';

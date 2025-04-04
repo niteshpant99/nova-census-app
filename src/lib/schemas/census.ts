@@ -1,35 +1,33 @@
 // src/lib/schemas/census.ts
 import { z } from "zod";
-// import type { Database } from "@/types/database";
 
-// TODO: NEED TO CHECK IF IT MATCHES OUR SUPABASE SCHEMA
-
-// Type alias for the database census entry
-// type DatabaseCensusEntry = Database["public"]["Tables"]["census_entries"]["Row"];
-
+/**
+ * Census Schema - Single source of truth for census data validation
+ * Used by both client and server components
+ */
 export const censusEntrySchema = z.object({
   // Basic info
   department: z.string(),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be in YYYY-MM-DD format"), // Changed from z.date()
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be in YYYY-MM-DD format"),
   
   // Patient counts
   previous_patients: z.number().min(0),
   
   // Transfers in
-  admissions: z.number().min(0).optional(),
-  referrals_in: z.number().min(0).optional(),
-  department_transfers_in: z.number().min(0).optional(),
+  admissions: z.number().min(0).default(0),
+  referrals_in: z.number().min(0).default(0),
+  department_transfers_in: z.number().min(0).default(0),
+  
   // Transfers out
-  recovered: z.number().min(0).optional(),
-  lama: z.number().min(0).optional(),
-  absconded: z.number().min(0).optional(),
-  referred_out: z.number().min(0).optional(),
-  not_improved: z.number().min(0).optional(),
-  deaths: z.number().min(0).optional(),
+  recovered: z.number().min(0).default(0),
+  lama: z.number().min(0).default(0),
+  absconded: z.number().min(0).default(0),
+  referred_out: z.number().min(0).default(0),
+  not_improved: z.number().min(0).default(0),
+  deaths: z.number().min(0).default(0),
   
   // Additional data
-  ot_cases: z.number().min(0).optional(),
-
+  ot_cases: z.number().min(0).default(0),
 });
 
 // Type for form data
@@ -42,33 +40,37 @@ export interface CensusEntry {
   date: string;
   previous_patients: number;
   
-  // Transfers in (nullable)
-  admissions: number | null;
-  referrals_in: number | null;
-  department_transfers_in: number | null;
-  total_transfers_in: number | null;
+  // Transfers in
+  admissions: number;
+  referrals_in: number;
+  department_transfers_in: number;
+  total_transfers_in: number;
   
-  // Transfers out (nullable)
-  recovered: number | null;
-  lama: number | null;
-  absconded: number | null;
-  referred_out: number | null;
-  not_improved: number | null;
-  deaths: number | null;
-  total_transfers_out: number | null;
+  // Transfers out
+  recovered: number;
+  lama: number;
+  absconded: number;
+  referred_out: number;
+  not_improved: number;
+  deaths: number;
+  total_transfers_out: number;
   
   // Additional data
-  ot_cases: number | null;
-  current_patients: number | null;
+  ot_cases: number;
+  current_patients: number;
   
   // Metadata
   created_by: string;
-  created_at: string | null;
-  updated_at: string | null;
-  is_locked: boolean | null;
+  created_at: string;
+  updated_at: string;
+  is_locked: boolean;
+  parent_department?: string;
 }
 
-// Helper function for calculating totals
+/**
+ * Calculate totals from census data
+ * Should match the database computed column logic
+ */
 export const calculateTotals = (data: Partial<CensusFormData>) => {
   const total_transfers_in = 
     (data.admissions ?? 0) + 

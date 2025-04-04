@@ -1,5 +1,5 @@
 // src/components/dashboard/Charts/TrendsChart.tsx
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card } from '@/components/ui/card';
 import { 
   LineChart, 
@@ -16,36 +16,7 @@ import type { ChartDataPoint } from '@/components/dashboard/types';
 import { format, parseISO } from 'date-fns';
 import { AlertCircle } from 'lucide-react';
 import type { TextProps } from 'recharts';
-
-// Custom hook for responsive design
-function useWindowSize() {
-  // Initialize with default values for SSR
-  const [windowSize, setWindowSize] = useState({
-    width: typeof window !== 'undefined' ? window.innerWidth : 1024,
-    height: typeof window !== 'undefined' ? window.innerHeight : 768,
-  });
-  
-  useEffect(() => {
-    // Handler to call on window resize
-    function handleResize() {
-      setWindowSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    }
-    
-    // Add event listener
-    window.addEventListener('resize', handleResize);
-    
-    // Call handler right away so state gets updated with initial window size
-    handleResize();
-    
-    // Remove event listener on cleanup
-    return () => window.removeEventListener('resize', handleResize);
-  }, []); // Empty array ensures effect runs only on mount
-  
-  return windowSize;
-}
+import { useWindowSize, getResponsiveBreakpoints } from '@/hooks/useWindowSize';
 
 // Mapping between metric IDs and their corresponding data fields
 const METRIC_DATA_KEYS: Record<string, keyof ChartDataPoint> = {
@@ -157,11 +128,8 @@ export function TrendsChart({ data, metrics, isLoading }: TrendsChartProps) {
   const colors = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))'];
   const windowSize = useWindowSize();
   
-  // Responsive breakpoints
-  const isXs = windowSize.width < 480;
-  const isSm = windowSize.width >= 480 && windowSize.width < 768;
-  const isMd = windowSize.width >= 768;
-  const isVerySmall = windowSize.width < 360;
+  // Get responsive breakpoints
+  const { isXs, isSm, isMd, isVerySmall } = getResponsiveBreakpoints(windowSize.width);
 
   // Handle loading state
   if (isLoading) {
