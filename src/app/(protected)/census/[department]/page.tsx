@@ -2,17 +2,12 @@
 import { CensusEntryPageClient } from '@/components/census/CensusEntryPageClient'
 import { notFound } from 'next/navigation'
 import { isValidDepartment } from '@/lib/config/departments'
-
-interface PageParams {
-  department: string
-}
+import type { PageParams } from '@/types/next'
 
 export default async function CensusEntryPage({
   params,
-}: {
-  params: PageParams
-}) {
-  const department = params.department
+}: PageParams) {
+  const department = params.department!
 
   // Validate the department parameter
   if (!isValidDepartment(department)) {
@@ -29,9 +24,7 @@ export default async function CensusEntryPage({
 // Optionally add metadata
 export async function generateMetadata({
   params,
-}: {
-  params: PageParams
-}) {
+}: PageParams) {
   return {
     title: `Census Entry - ${params.department}`,
     description: `Enter census data for ${params.department}`,

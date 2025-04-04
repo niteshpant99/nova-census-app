@@ -16,7 +16,7 @@ interface OccupancyChartProps {
 
 // Custom tooltip component for better mobile experience
 const CustomTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload || !payload.length) return null;
+  if (!active || !payload?.length) return null;
   
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 480;
   const departmentInfo = payload[0]?.payload;

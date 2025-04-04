@@ -16,7 +16,7 @@ interface DischargeChartProps {
 
 // Custom tooltip component optimized for mobile
 const CustomTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload || !payload.length) return null;
+  if (!active || !payload?.length) return null;
   
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 480;
   

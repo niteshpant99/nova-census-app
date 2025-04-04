@@ -43,7 +43,7 @@ const METRIC_DISPLAY_NAMES: Record<string, string> = {
 const CustomTooltip = ({ active, payload, label }: any) => {
   const windowSize = useWindowSize();
   
-  if (!active || !payload || !payload.length) {
+  if (!active || !payload?.length) {
     return null;
   }
 

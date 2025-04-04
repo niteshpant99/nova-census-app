@@ -1,7 +1,7 @@
 // src/components/error-boundary/FormErrorBoundary.tsx
 'use client';
 
-import React, { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';

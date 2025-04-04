@@ -146,10 +146,10 @@ export function useDashboardData(dateRange: DateRange | undefined, selectedDepar
 
   // Return normalized and type-safe data
   return {
-    stats: stats as DashboardStats | undefined,
+    stats: stats,
     historical: enhancedHistorical,
-    occupancy: occupancy as DepartmentOccupancy[] | undefined,
-    discharges: discharges as DischargeData[] | undefined,
+    occupancy: occupancy,
+    discharges: discharges,
     isLoading,
     isError,
     errors
