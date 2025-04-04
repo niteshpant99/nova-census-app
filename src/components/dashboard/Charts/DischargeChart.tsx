@@ -143,14 +143,15 @@ export function DischargeChart({ data, isLoading }: DischargeChartProps) {
     : sortedData;
   
   // Format department names for X-axis, abbreviated on mobile
-  const formatDepartmentName = (name: string) => {
+  const formatDepartmentName = (name: string): string => {
     if (isVerySmall) {
       // First letter of each word, or first 3 letters
-      return name.split(' ').map(w => w[0]).join('') || name.substring(0, 3);
+      const initials = name.split(' ').map(w => w.charAt(0)).join('');
+      return initials || name.substring(0, 3);
     }
     else if (isXs) {
       // Truncate to first word or first 6 chars
-      const firstWord = name.split(' ')[0];
+      const firstWord = name.split(' ')[0] || '';
       return firstWord.length < 6 ? firstWord : name.substring(0, 6);
     }
     

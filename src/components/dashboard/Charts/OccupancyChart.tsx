@@ -109,18 +109,19 @@ export function OccupancyChart({ data, isLoading }: OccupancyChartProps) {
   };
   
   // Format department names using the service, abbreviate for mobile
-  const formatDepartmentName = (id: string) => {
-    const fullName = departmentService.getDepartmentName(id);
+  const formatDepartmentName = (id: string): string => {
+    const fullName = departmentService.getDepartmentName(id) || id;
     
     // On very small screens, abbreviate names further
     if (isVerySmall) {
       // First letter of each word, or first 3 letters
-      return fullName.split(' ').map(w => w[0]).join('') || fullName.substring(0, 3);
+      const initials = fullName.split(' ').map(w => w.charAt(0)).join('');
+      return initials || fullName.substring(0, 3);
     }
     // On small screens, abbreviate names
     else if (isXs) {
       // Truncate to first word or first 6 chars
-      const firstWord = fullName.split(' ')[0];
+      const firstWord = fullName.split(' ')[0] || '';
       return firstWord.length < 6 ? firstWord : fullName.substring(0, 6);
     }
     
